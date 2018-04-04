@@ -5,15 +5,15 @@ defmodule ExAws.Dynamo.DecoderTest do
 
   test "decoder works on lists of numbers" do
     assert %{"NS" => ["1", "2", "3"]}
-    |> Decoder.decode == [1, 2, 3]
+           |> Decoder.decode() == [1, 2, 3]
 
     assert %{"NS" => [1, 2, 3]}
-    |> Decoder.decode == [1,2,3]
+           |> Decoder.decode() == [1, 2, 3]
   end
 
   test "lists of different types" do
     assert %{"L" => [%{"S" => "asdf"}, %{"N" => "1"}]}
-    |> Decoder.decode == ["asdf", 1]
+           |> Decoder.decode() == ["asdf", 1]
   end
 
   test "Decoder ints works" do
@@ -33,6 +33,6 @@ defmodule ExAws.Dynamo.DecoderTest do
 
   test "Decoder structs works properly" do
     user = %Test.User{email: "foo@bar.com", name: "Bob", age: 23, admin: false}
-    assert user == user |> Encoder.encode |> Decoder.decode(as: Test.User)
+    assert user == user |> Encoder.encode() |> Decoder.decode(as: Test.User)
   end
 end

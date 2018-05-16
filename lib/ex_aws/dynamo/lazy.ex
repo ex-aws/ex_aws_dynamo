@@ -13,18 +13,23 @@ defmodule ExAws.Dynamo.Lazy do
   end
 
   defp build_request_stream(request_fun) do
-    Stream.resource(fn -> {request_fun, []} end, fn
-      :quit -> {:halt, nil}
+    Stream.resource(
+      fn -> {request_fun, []} end,
+      fn
+        :quit ->
+          {:halt, nil}
 
-      {fun, args} -> case fun.(args) do
+        {fun, args} ->
+          case fun.(args) do
+            %{"Items" => items, "LastEvaluatedKey" => key} ->
+              {items, {fun, [exclusive_start_key: key]}}
 
-        %{"Items" => items, "LastEvaluatedKey" => key} ->
-          {items, {fun, [exclusive_start_key: key]}}
-
-        %{"Items" => items} ->
-          {items, :quit}
-      end
-    end, &pass/1)
+            %{"Items" => items} ->
+              {items, :quit}
+          end
+      end,
+      &pass/1
+    )
   end
 
   @doc "Generates a query stream"

@@ -31,11 +31,13 @@ defmodule ExAws.Dynamo.Decoder do
   def decode(%{"B" => value}), do: value
   def decode(%{"S" => value}), do: value
   def decode(%{"M" => value}), do: value |> decode
-  def decode(%{"SS" => values}), do: values
+  def decode(%{"SS" => values}), do: MapSet.new(values)
   def decode(%{"BS" => values}), do: values
 
   def decode(%{"NS" => values}) do
-    Enum.map(values, &binary_to_number/1)
+    values
+    |> Stream.map(&binary_to_number/1)
+    |> Enum.into(MapSet.new())
   end
 
   def decode(%{"L" => values}) do

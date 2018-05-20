@@ -5,10 +5,15 @@ defmodule ExAws.Dynamo.DecoderTest do
 
   test "decoder works on lists of numbers" do
     assert %{"NS" => ["1", "2", "3"]}
-           |> Decoder.decode() == [1, 2, 3]
+           |> Decoder.decode() == MapSet.new([1, 2, 3])
 
     assert %{"NS" => [1, 2, 3]}
-           |> Decoder.decode() == [1, 2, 3]
+           |> Decoder.decode() == MapSet.new([1, 2, 3])
+  end
+
+  test "decoder decodes stringset to a mapset" do
+    assert %{"SS" => ["foo", "bar", "baz"]}
+      |> Decoder.decode() == MapSet.new(["foo", "bar", "baz"])
   end
 
   test "lists of different types" do

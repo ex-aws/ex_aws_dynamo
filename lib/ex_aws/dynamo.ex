@@ -125,6 +125,10 @@ defmodule ExAws.Dynamo do
   @spec decode_item(Map.t(), as: atom) :: Map.t()
   def decode_item(item, opts \\ [])
 
+  def decode_item(%{"Items" => items}, opts) do
+    for item <- items, do: decode_item(item, opts)
+  end
+
   def decode_item(%{"Item" => item}, opts) do
     decode_item(item, opts)
   end

@@ -14,6 +14,7 @@ defmodule ExAws.DynamoIntegrationTest do
   setup_all do
     Dynamo.delete_table("Users") |> ExAws.request()
     Dynamo.delete_table(Test.User) |> ExAws.request()
+    Dynamo.delete_table("SeveralUsers") |> ExAws.request()
     Dynamo.delete_table(Foo) |> ExAws.request()
     Dynamo.delete_table("books") |> ExAws.request()
     :ok
@@ -58,6 +59,36 @@ defmodule ExAws.DynamoIntegrationTest do
       |> Dynamo.decode_item(as: Test.User)
 
     assert user == item
+  end
+
+  test "put and get several items with map values work" do
+    {:ok, _} =
+      Dynamo.create_table("SeveralUsers", :email, [email: :string], 1, 1) |> ExAws.request()
+
+    user1 = %Test.User{
+      email: "foo@bar.com",
+      name: %{first: "bob", last: "bubba"},
+      age: 23,
+      admin: false
+    }
+
+    user2 = %Test.User{
+      email: "bar@bar.com",
+      name: %{first: "jane", last: "bubba"},
+      age: 21,
+      admin: true
+    }
+
+    assert {:ok, _} = Dynamo.put_item("SeveralUsers", user1) |> ExAws.request()
+    assert {:ok, _} = Dynamo.put_item("SeveralUsers", user2) |> ExAws.request()
+
+    items =
+      Dynamo.scan("SeveralUsers", limit: 2)
+      |> ExAws.request!()
+      |> Dynamo.decode_item(as: Test.User)
+
+    assert Enum.at(items, 0) == user1
+    assert Enum.at(items, 1) == user2
   end
 
   test "stream scan" do

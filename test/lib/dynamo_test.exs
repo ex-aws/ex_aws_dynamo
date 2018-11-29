@@ -292,4 +292,57 @@ defmodule ExAws.DynamoTest do
     assert Enum.at(request.headers, 0) == {"x-amz-target", "DynamoDB_20120810.DescribeTimeToLive"}
     assert request.data == expected
   end
+
+  test "transact_get_items" do
+    expected = %{
+      "TransactItems" => [
+        %{
+          "Get" => %{
+            "Key" => %{"email" => %{"S" => "foo@baz.com"}},
+            "TableName" => "Users",
+            "ProjectionExpression" => "email,age"
+          }
+        }
+      ]
+    }
+
+    request =
+      Dynamo.transact_get_items([
+        {"Users", %{"email" => "foo@baz.com"}, projection_expression: "email,age"}
+      ])
+
+    assert Enum.at(request.headers, 0) == {"x-amz-target", "DynamoDB_20120810.TransactGetItems"}
+    assert request.data == expected
+  end
+
+  test "transact_write_items" do
+    expected = %{
+      "TransactItems" => [
+        %{
+          "Update" => %{
+            "ConditionExpression" => "Likes = :old_likes",
+            "ExpressionAttributeValues" => %{
+              ":likes" => %{"N" => "9"},
+              ":old_likes" => %{"N" => "99"}
+            },
+            "Key" => %{"email" => %{"S" => "foo@baz.com"}},
+            "TableName" => "Users",
+            "UpdateExpression" => "set Likes = :likes"
+          }
+        }
+      ]
+    }
+
+    request =
+      Dynamo.transact_write_items(
+        update:
+          {"Users", %{"email" => "foo@baz.com"},
+           update_expression: "set Likes = :likes",
+           condition_expression: "Likes = :old_likes",
+           expression_attribute_values: [likes: 9, old_likes: 99]}
+      )
+
+    assert Enum.at(request.headers, 0) == {"x-amz-target", "DynamoDB_20120810.TransactWriteItems"}
+    assert request.data == expected
+  end
 end

@@ -62,8 +62,7 @@ defmodule ExAws.DynamoIntegrationTest do
   end
 
   test "put and get several items with map values work" do
-    {:ok, _} =
-      Dynamo.create_table("SeveralUsers", :email, [email: :string], 1, 1) |> ExAws.request()
+    {:ok, _} = Dynamo.create_table("SeveralUsers", :email, [email: :string], 1, 1) |> ExAws.request()
 
     user1 = %Test.User{
       email: "foo@bar.com",

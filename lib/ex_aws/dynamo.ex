@@ -60,7 +60,7 @@ defmodule ExAws.Dynamo do
   http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Operations.html
   """
 
-  import ExAws.Utils, only: [camelize_keys: 1, camelize_keys: 2, upcase: 1]
+  import ExAws.Utils, only: [camelize: 1, camelize_keys: 1, camelize_keys: 2, upcase: 1]
   alias __MODULE__
 
   @nested_opts [:exclusive_start_key, :expression_attribute_values, :expression_attribute_names]
@@ -333,8 +333,7 @@ defmodule ExAws.Dynamo do
   end
 
   @doc "Update time to live"
-  @spec update_time_to_live(table :: binary, ttl_attribute :: binary, enabled :: boolean) ::
-          ExAws.Operation.JSON.t()
+  @spec update_time_to_live(table :: binary, ttl_attribute :: binary, enabled :: boolean) :: ExAws.Operation.JSON.t()
   def update_time_to_live(table, ttl_attribute, enabled) do
     data = build_time_to_live(ttl_attribute, enabled) |> Map.merge(%{"TableName" => table})
 
@@ -487,8 +486,7 @@ defmodule ExAws.Dynamo do
           | {:keys, [primary_key]}
         ]
   @spec batch_get_item(%{table_name => get_item}) :: ExAws.Operation.JSON.t()
-  @spec batch_get_item(%{table_name => get_item}, opts :: batch_get_item_opts) ::
-          ExAws.Operation.JSON.t()
+  @spec batch_get_item(%{table_name => get_item}, opts :: batch_get_item_opts) :: ExAws.Operation.JSON.t()
   def batch_get_item(data, opts \\ []) do
     request_items =
       data
@@ -526,8 +524,7 @@ defmodule ExAws.Dynamo do
           | {:return_values, return_values_vals}
         ]
   @spec put_item(table_name :: table_name, record :: map()) :: ExAws.Operation.JSON.t()
-  @spec put_item(table_name :: table_name, record :: map(), opts :: put_item_opts) ::
-          ExAws.Operation.JSON.t()
+  @spec put_item(table_name :: table_name, record :: map(), opts :: put_item_opts) :: ExAws.Operation.JSON.t()
   def put_item(name, record, opts \\ []) do
     data =
       opts
@@ -558,8 +555,7 @@ defmodule ExAws.Dynamo do
           | {:return_item_collection_metrics, return_item_collection_metrics_vals}
         ]
   @spec batch_write_item(%{table_name => [write_item]}) :: ExAws.Operation.JSON.t()
-  @spec batch_write_item(%{table_name => [write_item]}, opts :: batch_write_item_opts) ::
-          ExAws.Operation.JSON.t()
+  @spec batch_write_item(%{table_name => [write_item]}, opts :: batch_write_item_opts) :: ExAws.Operation.JSON.t()
   def batch_write_item(data, opts \\ []) do
     request_items =
       data
@@ -648,8 +644,7 @@ defmodule ExAws.Dynamo do
           | {:return_item_collection_metrics, return_item_collection_metrics_vals}
           | {:return_values, return_values_vals}
         ]
-  @spec delete_item(table_name :: table_name, primary_key :: primary_key) ::
-          ExAws.Operation.JSON.t()
+  @spec delete_item(table_name :: table_name, primary_key :: primary_key) :: ExAws.Operation.JSON.t()
   @spec delete_item(
           table_name :: table_name,
           primary_key :: primary_key,
@@ -665,6 +660,103 @@ defmodule ExAws.Dynamo do
       })
 
     request(:delete_item, data)
+  end
+
+  @doc """
+  Update item in table
+
+  For update_args format see
+  http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateItem.html
+  """
+  @type transact_get_item_opts :: [
+          {:expression_attribute_names, expression_attribute_names_vals}
+          | {:projection_expression, binary}
+        ]
+
+  @type transact_get_item ::
+          {table_name :: binary, primary_key :: primary_key}
+          | {table_name :: binary, primary_key :: primary_key, transact_get_item_opts}
+
+  @type transact_get_items_opts :: [
+          {:return_consumed_capacity, return_consumed_capacity_vals}
+        ]
+
+  @spec transact_get_items(items :: [transact_get_item], transact_get_items_opts) :: ExAws.Operation.JSON.t()
+  @spec transact_get_items(items :: [transact_get_item]) :: ExAws.Operation.JSON.t()
+  def transact_get_items(items, opts \\ []) do
+    data =
+      opts
+      |> build_opts
+      |> Map.merge(%{
+        "TransactItems" => Enum.map(items, &build_transaction_item({:get, &1}))
+      })
+
+    request(:transact_get_items, data)
+  end
+
+  defp build_transaction_item({method, {table, item}}), do: build_transaction_item({method, {table, item, []}})
+
+  defp build_transaction_item({method, {table, item, opts}}) do
+    build_transaction_item(method, table, item, opts)
+  end
+
+  defp build_transaction_item(method, table_name, item, opts) do
+    item = item |> Map.new() |> Dynamo.Encoder.encode_root()
+
+    details =
+      opts
+      |> build_opts()
+      |> Map.merge(%{
+        "TableName" => table_name,
+        transaction_item_key(method) => item
+      })
+
+    %{camelize(method) => details}
+  end
+
+  defp transaction_item_key(:put), do: "Item"
+  defp transaction_item_key(_any), do: "Key"
+
+  @type return_values_on_condition_check_failure_vals :: :all_old | :none
+
+  @type transact_standard_item_opts :: [
+          {:condition_expression, binary}
+          | {:expression_attribute_names, expression_attribute_names_vals}
+          | {:expression_attribute_values, expression_attribute_values_vals}
+          | {:return_values_on_condition_check_failure, return_values_on_condition_check_failure_vals}
+        ]
+
+  @type transact_update_item_opts :: [
+          {:condition_expression, binary}
+          | {:expression_attribute_names, expression_attribute_names_vals}
+          | {:expression_attribute_values, expression_attribute_values_vals}
+          | {:return_values_on_condition_check_failure, return_values_on_condition_check_failure_vals}
+          | {:update_expression, binary}
+        ]
+
+  @type transact_write_item ::
+          {:condition_check, {table_name :: binary, key :: primary_key, transact_standard_item_opts}}
+          | {:delete, {table_name :: binary, key :: primary_key, transact_standard_item_opts}}
+          | {:put, {table_name :: binary, item :: map(), transact_standard_item_opts}}
+          | {:update, {table_name :: binary, key :: primary_key, transact_update_item_opts}}
+
+  @type transact_write_items_opts :: [
+          {:client_request_token, binary}
+          | {:return_consumed_capacity, return_consumed_capacity_vals}
+          | {:return_item_collection_metrics, return_item_collection_metrics_vals}
+        ]
+
+  @spec transact_write_items(items :: [transact_write_item], transact_write_items_opts) :: ExAws.Operation.JSON.t()
+  @spec transact_write_items(items :: [transact_write_item]) :: ExAws.Operation.JSON.t()
+  def transact_write_items(items, opts \\ []) do
+    data =
+      opts
+      |> build_opts
+      |> Map.merge(%{
+        "TransactItems" => Enum.map(items, &build_transaction_item/1)
+      })
+
+    request(:transact_write_items, data)
   end
 
   ## Options builder

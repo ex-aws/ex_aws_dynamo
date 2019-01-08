@@ -94,7 +94,11 @@ end
 
 defimpl ExAws.Dynamo.Encodable, for: BitString do
   def encode(val, _) do
-    %{"S" => val}
+    if String.valid?(val) do
+      %{"S" => val}
+    else
+      %{"B" => Base.encode64(val)}
+    end
   end
 end
 

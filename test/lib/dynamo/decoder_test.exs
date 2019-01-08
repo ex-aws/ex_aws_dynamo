@@ -65,4 +65,12 @@ defmodule ExAws.Dynamo.DecoderTest do
     user = %Test.User{email: "foo@bar.com", name: "Bob", age: 23, admin: false}
     assert user == user |> Encoder.encode() |> Decoder.decode(as: Test.User)
   end
+
+  test "Decoder binary that are not strings works" do
+    assert :zlib.unzip(
+             Decoder.decode(%{
+               "B" => "BcGBCQAgCATAVX6ZBvlKUogP1P3pbmi9bYlFwal9DTPEDCu0s8E06DWqM3TqAw=="
+             })
+           ) == "Encoder can handle binaries that are not strings"
+  end
 end

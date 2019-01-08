@@ -27,6 +27,12 @@ defmodule ExAws.Dynamo.EncoderTest do
            }
   end
 
+  test "Encoder can handle binaries that are not strings" do
+    assert Encoder.encode(:zlib.zip("Encoder can handle binaries that are not strings")) == %{
+             "B" => "BcGBCQAgCATAVX6ZBvlKUogP1P3pbmi9bYlFwal9DTPEDCu0s8E06DWqM3TqAw=="
+           }
+  end
+
   test "Encoder with structs works properly" do
     user = %Test.User{email: "foo@bar.com", name: "Bob", age: 23, admin: false}
 

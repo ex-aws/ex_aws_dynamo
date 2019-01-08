@@ -36,7 +36,7 @@ defmodule ExAws.Dynamo.Decoder do
   def decode(%{"BOOL" => "false"}), do: false
   def decode(%{"NULL" => true}), do: nil
   def decode(%{"NULL" => "true"}), do: nil
-  def decode(%{"B" => value}), do: value
+  def decode(%{"B" => value}), do: Base.decode64!(value)
   def decode(%{"S" => value}), do: value
   def decode(%{"M" => value}), do: value |> decode
   if Application.get_env(:ex_aws, :dynamodb, [])[:decode_sets] do

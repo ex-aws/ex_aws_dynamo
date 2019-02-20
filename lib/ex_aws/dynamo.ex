@@ -630,7 +630,7 @@ defmodule ExAws.Dynamo do
   end
 
   defp build_transaction_item(method, table_name, item, opts) do
-    item = item |> Map.new() |> Dynamo.Encoder.encode_root()
+    item = item |> Dynamo.Encoder.encode_root()
 
     details =
       opts

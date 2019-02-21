@@ -107,6 +107,10 @@ defmodule ExAws.Dynamo do
           | :string
           | :string_set
 
+  @type dynamo_billing_types ::
+          :pay_per_request
+          | :provisioned
+
   @type key_schema :: [{atom | binary, :hash | :range}, ...]
   @type key_definitions :: [{atom | binary, dynamo_type_names}, ...]
 
@@ -202,7 +206,9 @@ defmodule ExAws.Dynamo do
           read_capacity :: pos_integer,
           write_capacity :: pos_integer,
           global_indexes :: [Map.t()],
-          local_indexes :: [Map.t()]
+          local_indexes :: [Map.t()],
+          ttl_attribute :: binary, enabled :: boolean,
+          billing_mode :: dynamo_billing_types
         ) :: ExAws.ExAws.Operation.JSON.t()
   def create_table(
         name,
@@ -211,17 +217,17 @@ defmodule ExAws.Dynamo do
         read_capacity,
         write_capacity,
         global_indexes,
-        local_indexes
+        local_indexes,
+        ttl_attribute \\ nil, enabled \\ false,
+        billing_mode \\ :provisioned
       ) do
-    data = %{
-      "TableName" => name,
-      "AttributeDefinitions" => key_definitions |> encode_key_definitions,
-      "KeySchema" => key_schema |> build_key_schema,
-      "ProvisionedThroughput" => %{
-        "ReadCapacityUnits" => read_capacity,
-        "WriteCapacityUnits" => write_capacity
-      }
-    }
+    data = build_billing_mode(read_capacity, write_capacity, billing_mode)
+          |> Map.merge(build_time_to_live(ttl_attribute, enabled))
+          |> Map.merge( %{
+              "TableName" => name,
+              "AttributeDefinitions" => key_definitions |> encode_key_definitions,
+              "KeySchema" => key_schema |> build_key_schema,
+            })
 
     data =
       %{
@@ -236,6 +242,7 @@ defmodule ExAws.Dynamo do
           Map.put(data, name, indices)
       end)
 
+
     request(:create_table, data)
   end
 
@@ -246,6 +253,20 @@ defmodule ExAws.Dynamo do
         "KeyType" => type |> upcase
       }
     end)
+  end
+
+  @spec build_billing_mode(read_capacity :: pos_integer, write_capacity :: pos_integer, billing_mode :: dynamo_billing_types) :: Map.t()
+  defp build_billing_mode(read_capacity, write_capacity, :provisioned) do
+    %{
+      "BillingMode" => "PROVISIONED",
+      "ProvisionedThroughput" => %{
+        "ReadCapacityUnits" => read_capacity,
+        "WriteCapacityUnits" => write_capacity
+      }
+    }
+  end
+  defp build_billing_mode(_read_capacity, _write_capacity, :pay_per_request) do
+    %{"BillingMode" => "PAY_PER_REQUEST"}
   end
 
   @doc "Describe table"
@@ -275,15 +296,25 @@ defmodule ExAws.Dynamo do
   @spec update_time_to_live(table :: binary, ttl_attribute :: binary, enabled :: boolean) ::
           ExAws.Operation.JSON.t()
   def update_time_to_live(table, ttl_attribute, enabled) do
-    data = %{
-      "TableName" => table,
+    data = build_time_to_live(ttl_attribute, enabled) |> Map.merge(%{"TableName" => table})
+
+    request(:update_time_to_live, data)
+  end
+
+  @spec build_time_to_live(ttl_attribute :: binary, enabled :: boolean) :: Map.t()
+  defp build_time_to_live("", _enabled) do
+    %{}
+  end
+  defp build_time_to_live(ttl_attribute, enabled)  when ttl_attribute != nil do
+    %{
       "TimeToLiveSpecification" => %{
         "AttributeName" => ttl_attribute,
         "Enabled" => enabled
       }
     }
-
-    request(:update_time_to_live, data)
+  end
+  defp build_time_to_live(_ttl_attribute, _enabled) do
+    %{}
   end
 
   @doc "Describe time to live"

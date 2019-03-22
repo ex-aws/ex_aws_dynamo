@@ -76,7 +76,7 @@ defmodule ExAws.Dynamo do
   @type primary_key :: [{atom, binary}] | %{atom => binary}
   @type exclusive_start_key_vals :: [{atom, binary}] | %{atom => binary}
   @type expression_attribute_names_vals :: %{binary => binary}
-  @type expression_attribute_values_vals :: [{atom, binary}] | %{atom => binary}
+  @type expression_attribute_values_vals :: [{atom, Dynamo.Encodable.t}] | %{atom => Dynamo.Encodable.t}
   @type return_consumed_capacity_vals ::
           :none
           | :total

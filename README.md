@@ -2,6 +2,16 @@
 
 Service module for https://github.com/ex-aws/ex_aws
 
+##**IMPORTANT - this is a fork!**
+
+This package is a fork of [ex_aws_dynamo](https://hex.pm/packages/ex_aws_dynamo). It supports DynamoDB's new "billing mode" feature, which is critical for our [ecto_adapters_dynamodb](https://hex.pm/packages/ecto_adapters_dynamodb) project.
+
+Hex requires that, for a package to be published, all of its dependencies must also be Hex packages, rather than sourced from Github/Gitlab, etc.; we (circles-learning-labs) are publishing this fork to Hex for use in our Ecto adapter until these changes have been merged into the original repository and published to Hex.
+
+While circles-learning-labs is taking on the responsibility of publishing this package to Hex, the work itself was done by @taun - view their original fork at https://github.com/taun/ex_aws_dynamo. Thanks, @taun!
+
+**If you need to use ex_aws_dynamo in your project, we highly recommend that you use the original Hex package, as this package may be unexpectedly deleted in the future.**
+
 ## Installation
 
 The package can be installed by adding `ex_aws_dynamo` to your list of dependencies in `mix.exs`

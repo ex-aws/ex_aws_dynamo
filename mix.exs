@@ -1,14 +1,14 @@
 defmodule ExAws.Dynamo.Mixfile do
   use Mix.Project
 
-  @version "2.0.1"
-  @service "dynamo"
-  @url "https://github.com/ex-aws/ex_aws_#{@service}"
-  @name __MODULE__ |> Module.split() |> Enum.take(2) |> Enum.join(".")
+  @version "2.1.0"
+  @service "ddb"
+  @url "https://github.com/circles-learning-labs/ex_aws_#{@service}"
+  @name "ExAws.DDB"
 
   def project do
     [
-      app: :ex_aws_dynamo,
+      app: :ex_aws_ddb,
       version: @version,
       elixir: "~> 1.5",
       elixirc_paths: elixirc_paths(Mix.env()),
@@ -22,9 +22,8 @@ defmodule ExAws.Dynamo.Mixfile do
 
   defp package do
     [
-      description: "#{@name} service package",
+      description: "IMPORTANT!!! This package is a fork of https://hex.pm/packages/ex_aws_dynamo - it supports new features of DynamoDB, such as different billing modes - we're publishing this for use in our own https://hex.pm/packages/ecto_adapters_dynamodb. If you need to use ex_aws_dynamo in your project, we highly recommend that you use the original Hex package, as this package may not be maintained and may be unexpectedly deleted in the future.",
       files: ["lib", "config", "mix.exs", "README*"],
-      maintainers: ["Ben Wilson"],
       licenses: ["MIT"],
       links: %{github: @url}
     ]

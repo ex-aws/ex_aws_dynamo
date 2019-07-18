@@ -14,7 +14,7 @@ defmodule ExAws.Dynamo do
 
   alias ExAws.Dynamo
 
-  # Create a users table with a primary key of email [String]
+  # Create a provisioned users table with a primary key of email [String]
   # and 1 unit of read and write capacity
   Dynamo.create_table("Users", "email", %{email: :string}, 1, 1)
   |> ExAws.request!
@@ -107,11 +107,10 @@ defmodule ExAws.Dynamo do
           | :number
           | :string
           | :string_set
-
   @type dynamo_billing_types ::
           :pay_per_request
           | :provisioned
-
+  @type table_opts :: [{atom(), dynamo_billing_types | [{atom(), String.t() | nil | boolean()}]}]
   @type key_schema :: [{atom | binary, :hash | :range}, ...]
   @type key_definitions :: [{atom | binary, dynamo_type_names}, ...]
 
@@ -151,7 +150,11 @@ defmodule ExAws.Dynamo do
   @doc """
   Create table
 
-  key_schema can be a simple binary or atom indicating a simple hash key
+  `key_schema` can be a simple binary or atom indicating a simple hash key
+
+  The default behavior is to create a provisioned table with no time-to-live specification.
+
+  If you are creating a pay-per-request table (`[billing_mode: :pay_per_request]`), you will still need to provide values for read and write capacities, although they will be ignored - you may consider providing `nil` in those cases.
   """
   @spec create_table(
           table_name :: binary,
@@ -159,7 +162,7 @@ defmodule ExAws.Dynamo do
           key_definitions :: key_definitions,
           read_capacity :: pos_integer,
           write_capacity :: pos_integer,
-          opts :: [{atom(), atom()}]
+          opts :: table_opts
         ) :: ExAws.Operation.JSON.t()
   def create_table(name, primary_key, key_definitions, read_capacity, write_capacity, opts \\ @table_opts)
   def create_table(
@@ -212,6 +215,9 @@ defmodule ExAws.Dynamo do
   create_table("TestUsers", [id: :hash], %{id: :string, email: :string}, 1, 1, secondary_index, [])
   ```
 
+  The default behavior is to create a provisioned table with no time-to-live specification.
+
+  If you are creating a pay-per-request table (`[billing_mode: :pay_per_request]`), you will still need to provide values for read and write capacities, although they will be ignored - you may consider providing `nil` in those cases.
   """
   @spec create_table(
           table_name :: binary,
@@ -221,7 +227,7 @@ defmodule ExAws.Dynamo do
           write_capacity :: pos_integer,
           global_indexes :: [Map.t()],
           local_indexes :: [Map.t()],
-          opts :: [{atom(), atom() | [{atom(), String.t() | nil | boolean()}]}]
+          opts :: table_opts
         ) :: ExAws.ExAws.Operation.JSON.t()
   def create_table(
         name,
@@ -268,6 +274,7 @@ defmodule ExAws.Dynamo do
   end
 
   @spec build_billing_mode(read_capacity :: pos_integer, write_capacity :: pos_integer, billing_mode :: dynamo_billing_types) :: Map.t()
+  # Pay-per-request (AKA on-demand) tables do not have read/write capacities.
   defp build_billing_mode(read_capacity, write_capacity, :provisioned) do
     %{
       "BillingMode" => "PROVISIONED",

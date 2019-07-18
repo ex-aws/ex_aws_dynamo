@@ -7,7 +7,7 @@ defmodule ExAws.DynamoTest do
   # ensure that the form of the data to be sent to AWS is correct.
   #
 
-  test "#create_table" do
+  test "#create_table with default opts" do
     expected = %{
       "AttributeDefinitions" => [
         %{"AttributeName" => :email, "AttributeType" => "S"},
@@ -18,7 +18,8 @@ defmodule ExAws.DynamoTest do
         %{"AttributeName" => :age, "KeyType" => "RANGE"}
       ],
       "ProvisionedThroughput" => %{"ReadCapacityUnits" => 1, "WriteCapacityUnits" => 1},
-      "TableName" => "Users"
+      "TableName" => "Users",
+      "BillingMode" => "PROVISIONED"
     }
 
     assert Dynamo.create_table(
@@ -30,7 +31,35 @@ defmodule ExAws.DynamoTest do
            ).data == expected
   end
 
-  test "create_table with secondary indexes" do
+  test "#create_table with specified opts" do
+    expected = %{
+      "AttributeDefinitions" => [
+        %{"AttributeName" => :email, "AttributeType" => "S"},
+        %{"AttributeName" => :age, "AttributeType" => "N"}
+      ],
+      "KeySchema" => [
+        %{"AttributeName" => :email, "KeyType" => "HASH"},
+        %{"AttributeName" => :age, "KeyType" => "RANGE"}
+      ],
+      "TableName" => "Users",
+      "BillingMode" => "PAY_PER_REQUEST",
+      "TimeToLiveSpecification" => %{
+        "AttributeName" => "expire_at",
+        "Enabled" => true
+      }
+    }
+
+    assert Dynamo.create_table(
+             "Users",
+             [email: :hash, age: :range],
+             [email: :string, age: :number],
+             nil,
+             nil,
+             [ttl_specification: [attr_name: "expire_at", enabled: true], billing_mode: :pay_per_request]
+           ).data == expected
+  end
+
+  test "create_table with secondary indexes and default opts" do
     expected = %{
       "AttributeDefinitions" => [%{"AttributeName" => :id, "AttributeType" => "S"}],
       "GlobalSecondaryIndexes" => [
@@ -47,7 +76,8 @@ defmodule ExAws.DynamoTest do
         }
       ],
       "ProvisionedThroughput" => %{"ReadCapacityUnits" => 1, "WriteCapacityUnits" => 1},
-      "TableName" => "TestUsers"
+      "TableName" => "TestUsers",
+      "BillingMode" => "PROVISIONED"
     }
 
     secondary_index = [

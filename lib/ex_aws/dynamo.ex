@@ -66,6 +66,7 @@ defmodule ExAws.Dynamo do
   @nested_opts [:exclusive_start_key, :expression_attribute_values, :expression_attribute_names]
   @upcase_opts [:return_values, :return_item_collection_metrics, :select, :total_segments]
   @special_opts @nested_opts ++ @upcase_opts
+  @table_opts [ttl_specification: [attr_name: nil, enabled: false], billing_mode: :provisioned]
 
   @namespace "DynamoDB_20120810"
 
@@ -157,16 +158,29 @@ defmodule ExAws.Dynamo do
           key_schema :: binary | atom | key_schema,
           key_definitions :: key_definitions,
           read_capacity :: pos_integer,
-          write_capacity :: pos_integer
+          write_capacity :: pos_integer,
+          opts :: [{atom(), atom()}]
         ) :: ExAws.Operation.JSON.t()
-  def create_table(name, primary_key, key_definitions, read_capacity, write_capacity)
+  def create_table(name, primary_key, key_definitions, read_capacity, write_capacity, opts \\ @table_opts)
+  def create_table(
+    name,
+    primary_key,
+    key_definitions,
+    read_capacity,
+    write_capacity,
+    opts)
       when is_atom(primary_key) or is_binary(primary_key) do
-    create_table(name, [{primary_key, :hash}], key_definitions, read_capacity, write_capacity)
+    create_table(name, [{primary_key, :hash}], key_definitions, read_capacity, write_capacity, opts)
   end
-
-  def create_table(name, key_schema, key_definitions, read_capacity, write_capacity)
+  def create_table(
+    name,
+    key_schema,
+    key_definitions,
+    read_capacity,
+    write_capacity,
+    opts)
       when is_list(key_schema) do
-    create_table(name, key_schema, key_definitions, read_capacity, write_capacity, [], [])
+    create_table(name, key_schema, key_definitions, read_capacity, write_capacity, [], [], opts)
   end
 
   @doc """
@@ -207,8 +221,7 @@ defmodule ExAws.Dynamo do
           write_capacity :: pos_integer,
           global_indexes :: [Map.t()],
           local_indexes :: [Map.t()],
-          ttl_attribute :: binary, enabled :: boolean,
-          billing_mode :: dynamo_billing_types
+          opts :: [{atom(), atom() | [{atom(), String.t() | nil | boolean()}]}]
         ) :: ExAws.ExAws.Operation.JSON.t()
   def create_table(
         name,
@@ -218,11 +231,10 @@ defmodule ExAws.Dynamo do
         write_capacity,
         global_indexes,
         local_indexes,
-        ttl_attribute \\ nil, enabled \\ false,
-        billing_mode \\ :provisioned
+        opts \\ @table_opts
       ) do
-    data = build_billing_mode(read_capacity, write_capacity, billing_mode)
-          |> Map.merge(build_time_to_live(ttl_attribute, enabled))
+    data = build_billing_mode(read_capacity, write_capacity, opts[:billing_mode])
+          |> Map.merge(build_time_to_live(opts[:ttl_specification][:attr_name], opts[:ttl_specification][:enabled]))
           |> Map.merge( %{
               "TableName" => name,
               "AttributeDefinitions" => key_definitions |> encode_key_definitions,

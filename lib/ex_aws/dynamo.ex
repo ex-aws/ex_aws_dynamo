@@ -273,22 +273,6 @@ defmodule ExAws.Dynamo do
     end)
   end
 
-  @spec maybe_build_billing_mode([{atom(), dynamo_billing_types | [{atom(), pos_integer}]}]) :: Map.t
-  defp maybe_build_billing_mode([billing_mode: billing_mode]) do
-    maybe_build_billing_mode(
-      [
-        provisioned_throughput:
-          [read_capacity_units: nil,
-           write_capacity_units: nil],
-        billing_mode: billing_mode
-      ]
-    )
-  end
-  defp maybe_build_billing_mode([provisioned_throughput: provisioned_throughput, billing_mode: billing_mode]) do
-    build_billing_mode(provisioned_throughput[:read_capacity_units], provisioned_throughput[:write_capacity_units], billing_mode)
-  end
-  defp maybe_build_billing_mode(attributes), do: attributes
-
   @spec build_billing_mode(read_capacity :: pos_integer, write_capacity :: pos_integer, billing_mode :: dynamo_billing_types) :: Map.t()
   defp build_billing_mode(read_capacity, write_capacity, :provisioned) do
     %{
@@ -315,12 +299,26 @@ defmodule ExAws.Dynamo do
   def update_table(name, attributes) do
     data =
       attributes
-      |> maybe_build_billing_mode()
+      |> maybe_convert_billing_mode()
       |> camelize_keys(deep: true)
       |> Map.merge(%{"TableName" => name})
 
     request(:update_table, data)
   end
+
+  @spec maybe_convert_billing_mode(attributes :: Keyword.t()) :: Keyword.t()
+  def maybe_convert_billing_mode(attributes) do
+    if Keyword.has_key?(attributes, :billing_mode),
+      do:   convert_billing_mode(attributes, attributes[:billing_mode]),
+      else: attributes
+  end
+
+  @spec convert_billing_mode(attributes :: Keyword.t, dynamo_billing_types) :: Keyword.t
+  defp convert_billing_mode(attributes, :provisioned), do: do_convert(attributes, "PROVISIONED")
+  defp convert_billing_mode(attributes, :pay_per_request), do: do_convert(attributes, "PAY_PER_REQUEST")
+
+  @spec do_convert(attributes :: Keyword.t, value :: String.t) :: Keyword.t
+  defp do_convert(attributes, value), do: Keyword.replace!(attributes, :billing_mode, value)
 
   @doc "Delete Table"
   @spec delete_table(table :: binary) :: ExAws.Operation.JSON.t()

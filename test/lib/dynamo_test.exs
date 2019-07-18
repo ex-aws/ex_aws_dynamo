@@ -103,6 +103,47 @@ defmodule ExAws.DynamoTest do
            ).data == expected
   end
 
+  test "#update_table" do
+    expected = %{"BillingMode" => "PAY_PER_REQUEST", "TableName" => "TestUsers"}
+
+    assert Dynamo.update_table(
+             "TestUsers",
+             [billing_mode: :pay_per_request]
+           ).data == expected
+
+    expected = %{
+      "BillingMode" => "PROVISIONED",
+      "ProvisionedThroughput" => %{
+        "ReadCapacityUnits" => 1,
+        "WriteCapacityUnits" => 1
+      },
+      "TableName" => "TestUsers"
+    }
+
+    assert Dynamo.update_table(
+             "TestUsers",
+             [provisioned_throughput:
+               [read_capacity_units: 1,
+                write_capacity_units: 1],
+              billing_mode: :provisioned
+             ]).data == expected
+
+    expected = %{
+      "ProvisionedThroughput" => %{
+        "ReadCapacityUnits" => 2,
+        "WriteCapacityUnits" => 3
+      },
+      "TableName" => "TestUsers"
+    }
+
+    assert Dynamo.update_table(
+             "TestUsers",
+             [provisioned_throughput:
+               [read_capacity_units: 2,
+                write_capacity_units: 3]
+             ]).data == expected
+  end
+
   test "#scan" do
     expected = %{
       "ExclusiveStartKey" => %{api_key: %{"S" => "api_key"}},

@@ -273,8 +273,23 @@ defmodule ExAws.Dynamo do
     end)
   end
 
+  @spec maybe_build_billing_mode([{atom(), dynamo_billing_types | [{atom(), pos_integer}]}]) :: Map.t
+  defp maybe_build_billing_mode([billing_mode: billing_mode]) do
+    maybe_build_billing_mode(
+      [
+        provisioned_throughput:
+          [read_capacity_units: nil,
+           write_capacity_units: nil],
+        billing_mode: billing_mode
+      ]
+    )
+  end
+  defp maybe_build_billing_mode([provisioned_throughput: provisioned_throughput, billing_mode: billing_mode]) do
+    build_billing_mode(provisioned_throughput[:read_capacity_units], provisioned_throughput[:write_capacity_units], billing_mode)
+  end
+  defp maybe_build_billing_mode(attributes), do: attributes
+
   @spec build_billing_mode(read_capacity :: pos_integer, write_capacity :: pos_integer, billing_mode :: dynamo_billing_types) :: Map.t()
-  # Pay-per-request (AKA on-demand) tables do not have read/write capacities.
   defp build_billing_mode(read_capacity, write_capacity, :provisioned) do
     %{
       "BillingMode" => "PROVISIONED",
@@ -284,6 +299,7 @@ defmodule ExAws.Dynamo do
       }
     }
   end
+  # Pay-per-request (AKA on-demand) tables do not have read/write capacities.
   defp build_billing_mode(_read_capacity, _write_capacity, :pay_per_request) do
     %{"BillingMode" => "PAY_PER_REQUEST"}
   end
@@ -299,6 +315,7 @@ defmodule ExAws.Dynamo do
   def update_table(name, attributes) do
     data =
       attributes
+      |> maybe_build_billing_mode()
       |> camelize_keys(deep: true)
       |> Map.merge(%{"TableName" => name})
 

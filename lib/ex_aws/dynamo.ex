@@ -66,7 +66,7 @@ defmodule ExAws.Dynamo do
   @nested_opts [:exclusive_start_key, :expression_attribute_values, :expression_attribute_names]
   @upcase_opts [:return_values, :return_item_collection_metrics, :select, :total_segments]
   @special_opts @nested_opts ++ @upcase_opts
-  @table_opts [ttl_specification: [attr_name: nil, enabled: false], billing_mode: :provisioned]
+  @default_billing_mode :provisioned
 
   @namespace "DynamoDB_20120810"
 
@@ -110,7 +110,6 @@ defmodule ExAws.Dynamo do
   @type dynamo_billing_types ::
           :pay_per_request
           | :provisioned
-  @type table_opts :: [{atom(), dynamo_billing_types | [{atom(), String.t() | nil | boolean()}]}]
   @type key_schema :: [{atom | binary, :hash | :range}, ...]
   @type key_definitions :: [{atom | binary, dynamo_type_names}, ...]
 
@@ -152,9 +151,7 @@ defmodule ExAws.Dynamo do
 
   `key_schema` can be a simple binary or atom indicating a simple hash key
 
-  The default behavior is to create a provisioned table with no time-to-live specification.
-
-  If you are creating a pay-per-request table (`[billing_mode: :pay_per_request]`), you will still need to provide values for read and write capacities, although they will be ignored - you may consider providing `nil` in those cases.
+  `billing_mode` may be either `:provisioned` (default) or `:pay_per_request`. If you are creating a `:pay-per-request` table, you will still need to provide values for read and write capacities, although they will be ignored - you may consider providing `nil` in those cases.
   """
   @spec create_table(
           table_name :: binary,
@@ -162,18 +159,18 @@ defmodule ExAws.Dynamo do
           key_definitions :: key_definitions,
           read_capacity :: pos_integer,
           write_capacity :: pos_integer,
-          opts :: table_opts
+          billing_mode :: dynamo_billing_types
         ) :: ExAws.Operation.JSON.t()
-  def create_table(name, primary_key, key_definitions, read_capacity, write_capacity, opts \\ @table_opts)
+  def create_table(name, primary_key, key_definitions, read_capacity, write_capacity, billing_mode \\ @default_billing_mode)
   def create_table(
     name,
     primary_key,
     key_definitions,
     read_capacity,
     write_capacity,
-    opts)
+    billing_mode)
       when is_atom(primary_key) or is_binary(primary_key) do
-    create_table(name, [{primary_key, :hash}], key_definitions, read_capacity, write_capacity, opts)
+    create_table(name, [{primary_key, :hash}], key_definitions, read_capacity, write_capacity, billing_mode)
   end
   def create_table(
     name,
@@ -181,9 +178,9 @@ defmodule ExAws.Dynamo do
     key_definitions,
     read_capacity,
     write_capacity,
-    opts)
+    billing_mode)
       when is_list(key_schema) do
-    create_table(name, key_schema, key_definitions, read_capacity, write_capacity, [], [], opts)
+    create_table(name, key_schema, key_definitions, read_capacity, write_capacity, [], [], billing_mode)
   end
 
   @doc """
@@ -195,6 +192,8 @@ defmodule ExAws.Dynamo do
   `"KeySchema"` in the aws docs can be `key_schema:`
 
   Note that both the `global_indexes` and `local_indexes` arguments expect a list of such indices.
+
+  `billing_mode` may be either `:provisioned` (default) or `:pay_per_request`. If you are creating a `:pay-per-request` table, you will still need to provide values for read and write capacities, although they will be ignored - you may consider providing `nil` in those cases.
 
   Examples
   ```
@@ -214,10 +213,6 @@ defmodule ExAws.Dynamo do
   }]
   create_table("TestUsers", [id: :hash], %{id: :string, email: :string}, 1, 1, secondary_index, [])
   ```
-
-  The default behavior is to create a provisioned table with no time-to-live specification.
-
-  If you are creating a pay-per-request table (`[billing_mode: :pay_per_request]`), you will still need to provide values for read and write capacities, although they will be ignored - you may consider providing `nil` in those cases.
   """
   @spec create_table(
           table_name :: binary,
@@ -227,7 +222,7 @@ defmodule ExAws.Dynamo do
           write_capacity :: pos_integer,
           global_indexes :: [Map.t()],
           local_indexes :: [Map.t()],
-          opts :: table_opts
+          billing_mode :: dynamo_billing_types
         ) :: ExAws.ExAws.Operation.JSON.t()
   def create_table(
         name,
@@ -237,10 +232,9 @@ defmodule ExAws.Dynamo do
         write_capacity,
         global_indexes,
         local_indexes,
-        opts \\ @table_opts
+        billing_mode \\ @default_billing_mode
       ) do
-    data = build_billing_mode(read_capacity, write_capacity, opts[:billing_mode])
-          |> Map.merge(build_time_to_live(opts[:ttl_specification][:attr_name], opts[:ttl_specification][:enabled]))
+    data = build_billing_mode(read_capacity, write_capacity, billing_mode)
           |> Map.merge( %{
               "TableName" => name,
               "AttributeDefinitions" => key_definitions |> encode_key_definitions,

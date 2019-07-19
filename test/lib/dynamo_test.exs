@@ -42,11 +42,7 @@ defmodule ExAws.DynamoTest do
         %{"AttributeName" => :age, "KeyType" => "RANGE"}
       ],
       "TableName" => "Users",
-      "BillingMode" => "PAY_PER_REQUEST",
-      "TimeToLiveSpecification" => %{
-        "AttributeName" => "expire_at",
-        "Enabled" => true
-      }
+      "BillingMode" => "PAY_PER_REQUEST"
     }
 
     assert Dynamo.create_table(
@@ -55,7 +51,7 @@ defmodule ExAws.DynamoTest do
              [email: :string, age: :number],
              nil,
              nil,
-             [ttl_specification: [attr_name: "expire_at", enabled: true], billing_mode: :pay_per_request]
+             :pay_per_request
            ).data == expected
   end
 

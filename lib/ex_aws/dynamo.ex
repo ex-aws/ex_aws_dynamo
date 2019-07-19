@@ -14,7 +14,7 @@ defmodule ExAws.Dynamo do
 
   alias ExAws.Dynamo
 
-  # Create a users table with a primary key of email [String]
+  # Create a provisioned users table with a primary key of email [String]
   # and 1 unit of read and write capacity
   Dynamo.create_table("Users", "email", %{email: :string}, 1, 1)
   |> ExAws.request!
@@ -66,6 +66,7 @@ defmodule ExAws.Dynamo do
   @nested_opts [:exclusive_start_key, :expression_attribute_values, :expression_attribute_names]
   @upcase_opts [:return_values, :return_item_collection_metrics, :select, :total_segments]
   @special_opts @nested_opts ++ @upcase_opts
+  @default_billing_mode :provisioned
 
   @namespace "DynamoDB_20120810"
 
@@ -106,7 +107,9 @@ defmodule ExAws.Dynamo do
           | :number
           | :string
           | :string_set
-
+  @type dynamo_billing_types ::
+          :pay_per_request
+          | :provisioned
   @type key_schema :: [{atom | binary, :hash | :range}, ...]
   @type key_definitions :: [{atom | binary, dynamo_type_names}, ...]
 
@@ -146,23 +149,38 @@ defmodule ExAws.Dynamo do
   @doc """
   Create table
 
-  key_schema can be a simple binary or atom indicating a simple hash key
+  `key_schema` can be a simple binary or atom indicating a simple hash key
+
+  `billing_mode` may be either `:provisioned` (default) or `:pay_per_request`. If you are creating a `:pay-per-request` table, you will still need to provide values for read and write capacities, although they will be ignored - you may consider providing `nil` in those cases.
   """
   @spec create_table(
           table_name :: binary,
           key_schema :: binary | atom | key_schema,
           key_definitions :: key_definitions,
           read_capacity :: pos_integer,
-          write_capacity :: pos_integer
+          write_capacity :: pos_integer,
+          billing_mode :: dynamo_billing_types
         ) :: ExAws.Operation.JSON.t()
-  def create_table(name, primary_key, key_definitions, read_capacity, write_capacity)
+  def create_table(name, primary_key, key_definitions, read_capacity, write_capacity, billing_mode \\ @default_billing_mode)
+  def create_table(
+    name,
+    primary_key,
+    key_definitions,
+    read_capacity,
+    write_capacity,
+    billing_mode)
       when is_atom(primary_key) or is_binary(primary_key) do
-    create_table(name, [{primary_key, :hash}], key_definitions, read_capacity, write_capacity)
+    create_table(name, [{primary_key, :hash}], key_definitions, read_capacity, write_capacity, billing_mode)
   end
-
-  def create_table(name, key_schema, key_definitions, read_capacity, write_capacity)
+  def create_table(
+    name,
+    key_schema,
+    key_definitions,
+    read_capacity,
+    write_capacity,
+    billing_mode)
       when is_list(key_schema) do
-    create_table(name, key_schema, key_definitions, read_capacity, write_capacity, [], [])
+    create_table(name, key_schema, key_definitions, read_capacity, write_capacity, [], [], billing_mode)
   end
 
   @doc """
@@ -174,6 +192,8 @@ defmodule ExAws.Dynamo do
   `"KeySchema"` in the aws docs can be `key_schema:`
 
   Note that both the `global_indexes` and `local_indexes` arguments expect a list of such indices.
+
+  `billing_mode` may be either `:provisioned` (default) or `:pay_per_request`. If you are creating a `:pay-per-request` table, you will still need to provide values for read and write capacities, although they will be ignored - you may consider providing `nil` in those cases.
 
   Examples
   ```
@@ -193,7 +213,6 @@ defmodule ExAws.Dynamo do
   }]
   create_table("TestUsers", [id: :hash], %{id: :string, email: :string}, 1, 1, secondary_index, [])
   ```
-
   """
   @spec create_table(
           table_name :: binary,
@@ -202,7 +221,8 @@ defmodule ExAws.Dynamo do
           read_capacity :: pos_integer,
           write_capacity :: pos_integer,
           global_indexes :: [Map.t()],
-          local_indexes :: [Map.t()]
+          local_indexes :: [Map.t()],
+          billing_mode :: dynamo_billing_types
         ) :: ExAws.ExAws.Operation.JSON.t()
   def create_table(
         name,
@@ -211,17 +231,15 @@ defmodule ExAws.Dynamo do
         read_capacity,
         write_capacity,
         global_indexes,
-        local_indexes
+        local_indexes,
+        billing_mode \\ @default_billing_mode
       ) do
-    data = %{
-      "TableName" => name,
-      "AttributeDefinitions" => key_definitions |> encode_key_definitions,
-      "KeySchema" => key_schema |> build_key_schema,
-      "ProvisionedThroughput" => %{
-        "ReadCapacityUnits" => read_capacity,
-        "WriteCapacityUnits" => write_capacity
-      }
-    }
+    data = build_billing_mode(read_capacity, write_capacity, billing_mode)
+          |> Map.merge( %{
+              "TableName" => name,
+              "AttributeDefinitions" => key_definitions |> encode_key_definitions,
+              "KeySchema" => key_schema |> build_key_schema,
+            })
 
     data =
       %{
@@ -236,6 +254,7 @@ defmodule ExAws.Dynamo do
           Map.put(data, name, indices)
       end)
 
+
     request(:create_table, data)
   end
 
@@ -248,6 +267,21 @@ defmodule ExAws.Dynamo do
     end)
   end
 
+  @spec build_billing_mode(read_capacity :: pos_integer, write_capacity :: pos_integer, billing_mode :: dynamo_billing_types) :: Map.t()
+  defp build_billing_mode(read_capacity, write_capacity, :provisioned) do
+    %{
+      "BillingMode" => "PROVISIONED",
+      "ProvisionedThroughput" => %{
+        "ReadCapacityUnits" => read_capacity,
+        "WriteCapacityUnits" => write_capacity
+      }
+    }
+  end
+  # Pay-per-request (AKA on-demand) tables do not have read/write capacities.
+  defp build_billing_mode(_read_capacity, _write_capacity, :pay_per_request) do
+    %{"BillingMode" => "PAY_PER_REQUEST"}
+  end
+
   @doc "Describe table"
   @spec describe_table(name :: binary) :: ExAws.Operation.JSON.t()
   def describe_table(name) do
@@ -255,15 +289,34 @@ defmodule ExAws.Dynamo do
   end
 
   @doc "Update Table"
-  @spec update_table(name :: binary, attributes :: Keyword.t()) :: ExAws.Operation.JSON.t()
+  @spec update_table(name :: binary, attributes :: Keyword.t() | Map.t()) :: ExAws.Operation.JSON.t()
   def update_table(name, attributes) do
     data =
       attributes
+      |> maybe_convert_billing_mode()
       |> camelize_keys(deep: true)
       |> Map.merge(%{"TableName" => name})
 
     request(:update_table, data)
   end
+
+  @spec maybe_convert_billing_mode(attributes :: Keyword.t() | Map.t()) :: Keyword.t() | Map.t()
+  def maybe_convert_billing_mode(attributes) do
+    case attributes[:billing_mode] do
+      nil -> attributes
+      _   -> convert_billing_mode(attributes, attributes[:billing_mode])
+    end
+  end
+
+  @spec convert_billing_mode(attributes :: Keyword.t() | Map.t(), dynamo_billing_types) :: Keyword.t() | Map.t()
+  defp convert_billing_mode(attributes, :provisioned), do: do_convert(attributes, "PROVISIONED")
+  defp convert_billing_mode(attributes, :pay_per_request), do: do_convert(attributes, "PAY_PER_REQUEST")
+
+  @spec do_convert(attributes :: Keyword.t() | Map.t(), value :: String.t()) :: Keyword.t() | Map.t()
+  defp do_convert(attributes, value) when is_map(attributes),
+    do: Map.replace!(attributes, :billing_mode, value)
+  defp do_convert(attributes, value),
+    do: Keyword.replace!(attributes, :billing_mode, value)
 
   @doc "Delete Table"
   @spec delete_table(table :: binary) :: ExAws.Operation.JSON.t()
@@ -275,15 +328,25 @@ defmodule ExAws.Dynamo do
   @spec update_time_to_live(table :: binary, ttl_attribute :: binary, enabled :: boolean) ::
           ExAws.Operation.JSON.t()
   def update_time_to_live(table, ttl_attribute, enabled) do
-    data = %{
-      "TableName" => table,
+    data = build_time_to_live(ttl_attribute, enabled) |> Map.merge(%{"TableName" => table})
+
+    request(:update_time_to_live, data)
+  end
+
+  @spec build_time_to_live(ttl_attribute :: binary, enabled :: boolean) :: Map.t()
+  defp build_time_to_live("", _enabled) do
+    %{}
+  end
+  defp build_time_to_live(ttl_attribute, enabled)  when ttl_attribute != nil do
+    %{
       "TimeToLiveSpecification" => %{
         "AttributeName" => ttl_attribute,
         "Enabled" => enabled
       }
     }
-
-    request(:update_time_to_live, data)
+  end
+  defp build_time_to_live(_ttl_attribute, _enabled) do
+    %{}
   end
 
   @doc "Describe time to live"

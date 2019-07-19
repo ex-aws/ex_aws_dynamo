@@ -24,7 +24,7 @@ defmodule ExAws.Dynamo.Mixfile do
     [
       description: "#{@name} service package",
       files: ["lib", "config", "mix.exs", "README*"],
-      maintainers: ["Ben Wilson"],
+      maintainers: ["Darren Klein", "Franko Franicevich", "Gilad Barkan", "Ben Wilson"],
       licenses: ["MIT"],
       links: %{github: @url}
     ]

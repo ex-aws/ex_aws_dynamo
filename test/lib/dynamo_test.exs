@@ -7,7 +7,7 @@ defmodule ExAws.DynamoTest do
   # ensure that the form of the data to be sent to AWS is correct.
   #
 
-  test "#create_table" do
+  test "#create_table with default opts" do
     expected = %{
       "AttributeDefinitions" => [
         %{"AttributeName" => :email, "AttributeType" => "S"},
@@ -18,7 +18,8 @@ defmodule ExAws.DynamoTest do
         %{"AttributeName" => :age, "KeyType" => "RANGE"}
       ],
       "ProvisionedThroughput" => %{"ReadCapacityUnits" => 1, "WriteCapacityUnits" => 1},
-      "TableName" => "Users"
+      "TableName" => "Users",
+      "BillingMode" => "PROVISIONED"
     }
 
     assert Dynamo.create_table(
@@ -30,7 +31,31 @@ defmodule ExAws.DynamoTest do
            ).data == expected
   end
 
-  test "create_table with secondary indexes" do
+  test "#create_table with specified opts" do
+    expected = %{
+      "AttributeDefinitions" => [
+        %{"AttributeName" => :email, "AttributeType" => "S"},
+        %{"AttributeName" => :age, "AttributeType" => "N"}
+      ],
+      "KeySchema" => [
+        %{"AttributeName" => :email, "KeyType" => "HASH"},
+        %{"AttributeName" => :age, "KeyType" => "RANGE"}
+      ],
+      "TableName" => "Users",
+      "BillingMode" => "PAY_PER_REQUEST"
+    }
+
+    assert Dynamo.create_table(
+             "Users",
+             [email: :hash, age: :range],
+             [email: :string, age: :number],
+             nil,
+             nil,
+             :pay_per_request
+           ).data == expected
+  end
+
+  test "create_table with secondary indexes and default opts" do
     expected = %{
       "AttributeDefinitions" => [%{"AttributeName" => :id, "AttributeType" => "S"}],
       "GlobalSecondaryIndexes" => [
@@ -47,7 +72,8 @@ defmodule ExAws.DynamoTest do
         }
       ],
       "ProvisionedThroughput" => %{"ReadCapacityUnits" => 1, "WriteCapacityUnits" => 1},
-      "TableName" => "TestUsers"
+      "TableName" => "TestUsers",
+      "BillingMode" => "PROVISIONED"
     }
 
     secondary_index = [
@@ -71,6 +97,47 @@ defmodule ExAws.DynamoTest do
              secondary_index,
              secondary_index
            ).data == expected
+  end
+
+  test "#update_table" do
+    expected = %{"BillingMode" => "PAY_PER_REQUEST", "TableName" => "TestUsers"}
+
+    assert Dynamo.update_table(
+             "TestUsers",
+             [billing_mode: :pay_per_request]
+           ).data == expected
+
+    expected = %{
+      "BillingMode" => "PROVISIONED",
+      "ProvisionedThroughput" => %{
+        "ReadCapacityUnits" => 1,
+        "WriteCapacityUnits" => 1
+      },
+      "TableName" => "TestUsers"
+    }
+
+    assert Dynamo.update_table(
+             "TestUsers",
+             [provisioned_throughput:
+               [read_capacity_units: 1,
+                write_capacity_units: 1],
+              billing_mode: :provisioned
+             ]).data == expected
+
+    expected = %{
+      "ProvisionedThroughput" => %{
+        "ReadCapacityUnits" => 2,
+        "WriteCapacityUnits" => 3
+      },
+      "TableName" => "TestUsers"
+    }
+
+    assert Dynamo.update_table(
+             "TestUsers",
+             [provisioned_throughput:
+               [read_capacity_units: 2,
+                write_capacity_units: 3]
+             ]).data == expected
   end
 
   test "#scan" do

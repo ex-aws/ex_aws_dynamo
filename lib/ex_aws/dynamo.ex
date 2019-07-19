@@ -289,7 +289,7 @@ defmodule ExAws.Dynamo do
   end
 
   @doc "Update Table"
-  @spec update_table(name :: binary, attributes :: Keyword.t()) :: ExAws.Operation.JSON.t()
+  @spec update_table(name :: binary, attributes :: Keyword.t() | Map.t()) :: ExAws.Operation.JSON.t()
   def update_table(name, attributes) do
     data =
       attributes
@@ -300,19 +300,23 @@ defmodule ExAws.Dynamo do
     request(:update_table, data)
   end
 
-  @spec maybe_convert_billing_mode(attributes :: Keyword.t()) :: Keyword.t()
+  @spec maybe_convert_billing_mode(attributes :: Keyword.t() | Map.t()) :: Keyword.t() | Map.t()
   def maybe_convert_billing_mode(attributes) do
-    if Keyword.has_key?(attributes, :billing_mode),
-      do:   convert_billing_mode(attributes, attributes[:billing_mode]),
-      else: attributes
+    case attributes[:billing_mode] do
+      nil -> attributes
+      _   -> convert_billing_mode(attributes, attributes[:billing_mode])
+    end
   end
 
-  @spec convert_billing_mode(attributes :: Keyword.t, dynamo_billing_types) :: Keyword.t
+  @spec convert_billing_mode(attributes :: Keyword.t() | Map.t(), dynamo_billing_types) :: Keyword.t() | Map.t()
   defp convert_billing_mode(attributes, :provisioned), do: do_convert(attributes, "PROVISIONED")
   defp convert_billing_mode(attributes, :pay_per_request), do: do_convert(attributes, "PAY_PER_REQUEST")
 
-  @spec do_convert(attributes :: Keyword.t, value :: String.t) :: Keyword.t
-  defp do_convert(attributes, value), do: Keyword.replace!(attributes, :billing_mode, value)
+  @spec do_convert(attributes :: Keyword.t() | Map.t(), value :: String.t()) :: Keyword.t() | Map.t()
+  defp do_convert(attributes, value) when is_map(attributes),
+    do: Map.replace!(attributes, :billing_mode, value)
+  defp do_convert(attributes, value),
+    do: Keyword.replace!(attributes, :billing_mode, value)
 
   @doc "Delete Table"
   @spec delete_table(table :: binary) :: ExAws.Operation.JSON.t()

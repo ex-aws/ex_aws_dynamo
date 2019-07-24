@@ -118,11 +118,11 @@ defmodule ExAws.DynamoTest do
 
     assert Dynamo.update_table(
              "TestUsers",
-             [provisioned_throughput:
-               [read_capacity_units: 1,
-                write_capacity_units: 1],
+             %{provisioned_throughput:
+               %{read_capacity_units: 1,
+                write_capacity_units: 1},
               billing_mode: :provisioned
-             ]).data == expected
+             }).data == expected
 
     expected = %{
       "ProvisionedThroughput" => %{

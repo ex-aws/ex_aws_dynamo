@@ -301,7 +301,7 @@ defmodule ExAws.Dynamo do
   end
 
   @spec maybe_convert_billing_mode(attributes :: Keyword.t() | Map.t()) :: Keyword.t() | Map.t()
-  def maybe_convert_billing_mode(attributes) do
+  defp maybe_convert_billing_mode(attributes) do
     case attributes[:billing_mode] do
       nil -> attributes
       _   -> convert_billing_mode(attributes, attributes[:billing_mode])
@@ -309,13 +309,13 @@ defmodule ExAws.Dynamo do
   end
 
   @spec convert_billing_mode(attributes :: Keyword.t() | Map.t(), dynamo_billing_types) :: Keyword.t() | Map.t()
-  defp convert_billing_mode(attributes, :provisioned), do: do_convert(attributes, "PROVISIONED")
-  defp convert_billing_mode(attributes, :pay_per_request), do: do_convert(attributes, "PAY_PER_REQUEST")
+  defp convert_billing_mode(attributes, :provisioned), do: do_convert_billing_mode(attributes, "PROVISIONED")
+  defp convert_billing_mode(attributes, :pay_per_request), do: do_convert_billing_mode(attributes, "PAY_PER_REQUEST")
 
-  @spec do_convert(attributes :: Keyword.t() | Map.t(), value :: String.t()) :: Keyword.t() | Map.t()
-  defp do_convert(attributes, value) when is_map(attributes),
+  @spec do_convert_billing_mode(attributes :: Keyword.t() | Map.t(), value :: String.t()) :: Keyword.t() | Map.t()
+  defp do_convert_billing_mode(attributes, value) when is_map(attributes),
     do: Map.replace!(attributes, :billing_mode, value)
-  defp do_convert(attributes, value),
+  defp do_convert_billing_mode(attributes, value) when is_list(attributes),
     do: Keyword.replace!(attributes, :billing_mode, value)
 
   @doc "Delete Table"

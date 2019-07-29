@@ -8,6 +8,11 @@ config :ex_aws, :dynamodb,
   port: 8000,
   region: "us-east-1"
 
+case Mix.env do
+  :test_options -> import_config "test_options.exs"
+  _             -> nil
+end
+
 # This configuration is loaded before any dependency and is restricted
 # to this project. If another project depends on this project, this
 # file won't be loaded nor affect the parent project. For this reason,

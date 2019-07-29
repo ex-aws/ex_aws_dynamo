@@ -123,6 +123,14 @@ defmodule ExAws.Dynamo do
   |> ExAws.request!
   |> Dynamo.decode_item(as: User)
   ```
+
+  By default this will decode various dynamodb sets into lists. If you'd
+  prefer they be decoded into `MapSet`s instead, set `decode_sets: true` in
+  your compile-time (not runtime) configuration:
+
+  ```elixir
+  config :ex_aws, :dynamodb, decode_sets: true
+  ```
   """
   @spec decode_item(Map.t()) :: Map.t()
   @spec decode_item(Map.t(), as: atom) :: Map.t()

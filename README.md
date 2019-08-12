@@ -11,7 +11,7 @@ along with `:ex_aws` and your preferred JSON codec / http client
 def deps do
   [
     {:ex_aws, "~> 2.0"},
-    {:ex_aws_dynamo, "~> 2.1"},
+    {:ex_aws_dynamo, "~> 2.2"},
     {:poison, "~> 3.0"},
     {:hackney, "~> 1.9"},
   ]
@@ -19,6 +19,19 @@ end
 ```
 
 Documentation can be found at [https://hexdocs.pm/ex_aws_dynamo](https://hexdocs.pm/ex_aws_dynamo).
+
+## Configuration
+
+### `decode_sets`
+
+The default behavior of this application is to encode Elixir `MapSet` data to one of DynamoDB's three set types - number set, string set, or binary set; however, those DynamoDB datatypes will be decoded to Elixir `List`. If you wish to decode DynamoDB set types to Elixir `MapSet`, you can set the configuration for this application to include `decode_sets: true`.
+
+For example:
+
+```
+config :ex_aws, :dynamodb,
+  decode_sets: true
+```
 
 ## License
 

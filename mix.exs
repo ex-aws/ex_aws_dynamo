@@ -16,7 +16,8 @@ defmodule ExAws.Dynamo.Mixfile do
       deps: deps(),
       name: @name,
       package: package(),
-      docs: [main: @name, source_ref: "v#{@version}", source_url: @url]
+      docs: [main: @name, source_ref: "v#{@version}", source_url: @url],
+      aliases: aliases()
     ]
   end
 
@@ -31,6 +32,7 @@ defmodule ExAws.Dynamo.Mixfile do
   end
 
   defp elixirc_paths(:test), do: ["lib", "test/support"]
+  defp elixirc_paths(:test_options), do: ["lib", "test/support"]
   defp elixirc_paths(_), do: ["lib"]
 
   # Run "mix help compile.app" to learn about applications.
@@ -44,9 +46,9 @@ defmodule ExAws.Dynamo.Mixfile do
   defp deps do
     [
       {:ex_doc, ">= 0.0.0", only: :dev},
-      {:hackney, ">= 0.0.0", only: [:dev, :test]},
-      {:sweet_xml, ">= 0.0.0", only: [:dev, :test]},
-      {:poison, ">= 0.0.0", only: [:dev, :test]},
+      {:hackney, ">= 0.0.0", only: [:dev, :test, :test_options]},
+      {:sweet_xml, ">= 0.0.0", only: [:dev, :test, :test_options]},
+      {:poison, ">= 0.0.0", only: [:dev, :test, :test_options]},
       ex_aws()
     ]
   end
@@ -56,5 +58,27 @@ defmodule ExAws.Dynamo.Mixfile do
       "LOCAL" -> {:ex_aws, path: "../ex_aws"}
       _ -> {:ex_aws, "~> 2.0"}
     end
+  end
+
+  defp aliases do
+    [
+      {:"test.all", [&run_tests/1, "test.options"]},
+      {:"test.options", [&run_options_tests/1]}
+    ]
+  end
+
+  defp run_tests(_) do
+    Mix.shell.cmd(
+      "mix test --color",
+      env: [{"MIX_ENV", "test"}]
+    )
+  end
+
+  defp run_options_tests(_) do
+    IO.puts "\nRunning tests with options enabled."
+    Mix.shell.cmd(
+      "mix test --color",
+      env: [{"MIX_ENV", "test_options"}]
+    )
   end
 end

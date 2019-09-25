@@ -12,12 +12,13 @@ defmodule ExAws.DynamoIntegrationTest do
   @moduletag :dynamo
 
   setup_all do
-    Dynamo.delete_table("Users") |> ExAws.request()
-    Dynamo.delete_table(Test.User) |> ExAws.request()
-    Dynamo.delete_table("SeveralUsers") |> ExAws.request()
-    Dynamo.delete_table(Foo) |> ExAws.request()
-    Dynamo.delete_table("books") |> ExAws.request()
-    :ok
+    tables = [ "TestUsers", Test.User, "TestSeveralUsers", TestFoo, "test_books", "TestUsersWithRange" ]
+
+    DDBLocal.delete_test_tables(tables)
+
+    on_exit(fn ->
+      DDBLocal.delete_test_tables(tables)
+    end)
   end
 
   test "#list_tables" do
@@ -25,13 +26,13 @@ defmodule ExAws.DynamoIntegrationTest do
   end
 
   test "#create and destroy table" do
-    assert {:ok, %{"TableDescription" => %{"TableName" => "Elixir.Foo"}}} =
-             Dynamo.create_table(Foo, :shard_id, [shard_id: :string], 1, 1) |> ExAws.request()
+    assert {:ok, %{"TableDescription" => %{"TableName" => "Elixir.TestFoo"}}} =
+             Dynamo.create_table(TestFoo, :shard_id, [shard_id: :string], 1, 1) |> ExAws.request()
   end
 
   test "#create table with range" do
     assert Dynamo.create_table(
-             "UsersWithRange",
+             "TestUsersWithRange",
              [email: :hash, age: :range],
              [email: :string, age: :number],
              1,
@@ -63,7 +64,7 @@ defmodule ExAws.DynamoIntegrationTest do
 
   test "put and get several items with map values work" do
     {:ok, _} =
-      Dynamo.create_table("SeveralUsers", :email, [email: :string], 1, 1) |> ExAws.request()
+      Dynamo.create_table("TestSeveralUsers", :email, [email: :string], 1, 1) |> ExAws.request()
 
     user1 = %Test.User{
       email: "foo@bar.com",
@@ -79,11 +80,11 @@ defmodule ExAws.DynamoIntegrationTest do
       admin: true
     }
 
-    assert {:ok, _} = Dynamo.put_item("SeveralUsers", user1) |> ExAws.request()
-    assert {:ok, _} = Dynamo.put_item("SeveralUsers", user2) |> ExAws.request()
+    assert {:ok, _} = Dynamo.put_item("TestSeveralUsers", user1) |> ExAws.request()
+    assert {:ok, _} = Dynamo.put_item("TestSeveralUsers", user2) |> ExAws.request()
 
     items =
-      Dynamo.scan("SeveralUsers", limit: 2)
+      Dynamo.scan("TestSeveralUsers", limit: 2)
       |> ExAws.request!()
       |> Dynamo.decode_item(as: Test.User)
 
@@ -92,7 +93,7 @@ defmodule ExAws.DynamoIntegrationTest do
   end
 
   test "stream scan" do
-    {:ok, _} = Dynamo.create_table("Users", :email, [email: :string], 1, 1) |> ExAws.request()
+    {:ok, _} = Dynamo.create_table("TestUsers", :email, [email: :string], 1, 1) |> ExAws.request()
 
     user = %Test.User{
       email: "foo@bar.com",
@@ -101,7 +102,7 @@ defmodule ExAws.DynamoIntegrationTest do
       admin: false
     }
 
-    assert {:ok, _} = Dynamo.put_item("Users", user) |> ExAws.request()
+    assert {:ok, _} = Dynamo.put_item("TestUsers", user) |> ExAws.request()
 
     user = %Test.User{
       email: "bar@bar.com",
@@ -110,7 +111,7 @@ defmodule ExAws.DynamoIntegrationTest do
       admin: false
     }
 
-    assert {:ok, _} = Dynamo.put_item("Users", user) |> ExAws.request()
+    assert {:ok, _} = Dynamo.put_item("TestUsers", user) |> ExAws.request()
 
     user = %Test.User{
       email: "baz@bar.com",
@@ -119,9 +120,9 @@ defmodule ExAws.DynamoIntegrationTest do
       admin: false
     }
 
-    assert {:ok, _} = Dynamo.put_item("Users", user) |> ExAws.request()
+    assert {:ok, _} = Dynamo.put_item("TestUsers", user) |> ExAws.request()
 
-    assert Dynamo.scan("Users", limit: 1)
+    assert Dynamo.scan("TestUsers", limit: 1)
            |> ExAws.stream!()
            |> Enum.count() == 3
   end
@@ -129,7 +130,7 @@ defmodule ExAws.DynamoIntegrationTest do
   test "batch_write_item works" do
     {:ok, _} =
       Dynamo.create_table(
-        "books",
+        "test_books",
         [title: "hash", format: "range"],
         [title: :string, format: :string],
         1,
@@ -142,13 +143,13 @@ defmodule ExAws.DynamoIntegrationTest do
       [put_request: [item: %{title: "Tale of Two Cities", format: "softcover", price: 10.00}]]
     ]
 
-    assert {:ok, _} = Dynamo.batch_write_item(%{"books" => requests}) |> ExAws.request()
+    assert {:ok, _} = Dynamo.batch_write_item(%{"test_books" => requests}) |> ExAws.request()
 
     delete_requests = [
       [delete_request: [key: %{title: "Tale of Two Cities", format: "hardcover"}]],
       [delete_request: [key: %{title: "Tale of Two Cities", format: "softcover"}]]
     ]
 
-    assert {:ok, _} = Dynamo.batch_write_item(%{"books" => delete_requests}) |> ExAws.request()
+    assert {:ok, _} = Dynamo.batch_write_item(%{"test_books" => delete_requests}) |> ExAws.request()
   end
 end

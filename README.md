@@ -33,6 +33,39 @@ config :ex_aws, :dynamodb,
   decode_sets: true
 ```
 
+## Local testing
+
+This application supports three test commands:
+
+* `mix test` - run the normal test suite
+* `mix test.options` - run the test suite with options enabled (see `config/test_options.exs`)
+* `mix test.all` - run `mix test` and `mix test.options` sequentially
+
+### Integration tests (optional)
+
+The tests in `test/lib/dynamo/integration_test.exs` will attempt to run against a running local instance of DynamoDB - in order to run these tests, you will need both a running local instance of DynamoDB as well as a `config/test.exs` file (currently gitignored) formatted like so:
+
+`config/test.exs`
+```elixir
+use Mix.Config
+
+config :ex_aws, :dynamodb,
+  scheme: "http://",
+  host: "localhost",
+  port: CHOOSE_YOUR_TEST_PORT,
+  region: "us-east-1"
+
+config :ex_aws,
+  debug_requests: true,
+  access_key_id: "abcd",
+  secret_access_key: "1234",
+  region: "us-east-1"
+```
+
+Before setting the `port`, be aware that `integration_test.exs` will create and delete tables with the names `"TestUsers", Test.User, "TestSeveralUsers", TestFoo, "test_books", "TestUsersWithRange"` - be careful when setting the port, as these operations may interfere with your current tables if they share any of those names.
+
+If you do not have a running local instance of DynamoDB and/or you don't provide a `config/test.exs` file, the integration tests will hang for a few seconds before returning `invalid` - this will not interfere with the successful execution of other tests.
+
 ## License
 
 The MIT License (MIT)

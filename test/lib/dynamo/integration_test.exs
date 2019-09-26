@@ -140,6 +140,19 @@ defmodule ExAws.DynamoIntegrationTest do
              |> ExAws.request()
 
     assert 24 == get1 |> Dynamo.decode_item(as: Test.User) |> Map.get(:age)
+
+    assert {:ok, %{}} =
+      Dynamo.transact_write_items([
+        delete: {"TestTransactions", Map.take(user1, [:email])},
+        delete: {"TestTransactions2", Map.take(user2, [:email])}
+      ]) |> ExAws.request()
+
+    assert {:ok, %{"Responses" => [%{}, %{}]}} =
+       Dynamo.transact_get_items([
+         {"TestTransactions", Map.take(user1, [:email])},
+         {"TestTransactions2", Map.take(user2, [:email])}
+       ])
+       |> ExAws.request()
   end
 
   test "stream scan" do

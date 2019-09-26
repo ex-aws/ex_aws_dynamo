@@ -402,7 +402,7 @@ defmodule ExAws.Dynamo do
   def scan(name, opts \\ []) do
     data =
       opts
-      |> build_opts
+      |> build_opts()
       |> Map.merge(%{"TableName" => name})
 
     request(:scan, data, %{stream_builder: &ExAws.Dynamo.Lazy.stream_scan(name, opts, &1)})
@@ -442,7 +442,7 @@ defmodule ExAws.Dynamo do
   def query(name, opts \\ []) do
     data =
       opts
-      |> build_opts
+      |> build_opts()
       |> Map.merge(%{"TableName" => name})
 
     request(:query, data, %{stream_builder: &ExAws.Dynamo.Lazy.stream_query(name, opts, &1)})
@@ -528,7 +528,7 @@ defmodule ExAws.Dynamo do
   def put_item(name, record, opts \\ []) do
     data =
       opts
-      |> build_opts
+      |> build_opts()
       |> Map.merge(%{
         "TableName" => name,
         "Item" => Dynamo.Encoder.encode_root(record)
@@ -594,7 +594,7 @@ defmodule ExAws.Dynamo do
   def get_item(name, primary_key, opts \\ []) do
     data =
       opts
-      |> build_opts
+      |> build_opts()
       |> Map.merge(%{
         "TableName" => name,
         "Key" => primary_key |> Map.new() |> Dynamo.Encoder.encode_root()
@@ -626,7 +626,7 @@ defmodule ExAws.Dynamo do
   def update_item(table_name, primary_key, update_opts) do
     data =
       update_opts
-      |> build_opts
+      |> build_opts()
       |> Map.merge(%{
         "TableName" => table_name,
         "Key" => primary_key |> Map.new() |> Dynamo.Encoder.encode_root()
@@ -653,7 +653,7 @@ defmodule ExAws.Dynamo do
   def delete_item(name, primary_key, opts \\ []) do
     data =
       opts
-      |> build_opts
+      |> build_opts()
       |> Map.merge(%{
         "TableName" => name,
         "Key" => primary_key |> Map.new() |> Dynamo.Encoder.encode_root()
@@ -686,7 +686,7 @@ defmodule ExAws.Dynamo do
   def transact_get_items(items, opts \\ []) do
     data =
       opts
-      |> build_opts
+      |> build_opts()
       |> Map.merge(%{
         "TransactItems" => Enum.map(items, &build_transaction_item({:get, &1}))
       })
@@ -751,7 +751,7 @@ defmodule ExAws.Dynamo do
   def transact_write_items(items, opts \\ []) do
     data =
       opts
-      |> build_opts
+      |> build_opts()
       |> Map.merge(%{
         "TransactItems" => Enum.map(items, &build_transaction_item/1)
       })
@@ -761,6 +761,7 @@ defmodule ExAws.Dynamo do
 
   ## Options builder
   ###################
+
   defp build_opts(opts) do
     opts = opts |> Map.new()
 

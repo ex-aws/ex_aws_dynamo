@@ -12,8 +12,16 @@ defmodule ExAws.DynamoIntegrationTest do
   @moduletag :dynamo
 
   setup_all do
-    tables = [ "TestUsers", Test.User, "TestSeveralUsers", TestFoo,
-               "test_books", "TestUsersWithRange", "TestTransactions", "TestTransactions2" ]
+    tables = [
+      "TestUsers",
+      Test.User,
+      "TestSeveralUsers",
+      TestFoo,
+      "test_books",
+      "TestUsersWithRange",
+      "TestTransactions",
+      "TestTransactions2"
+    ]
 
     DDBLocal.delete_test_tables(tables)
 
@@ -64,8 +72,7 @@ defmodule ExAws.DynamoIntegrationTest do
   end
 
   test "put and get several items with map values work" do
-    {:ok, _} =
-      Dynamo.create_table("TestSeveralUsers", :email, [email: :string], 1, 1) |> ExAws.request()
+    {:ok, _} = Dynamo.create_table("TestSeveralUsers", :email, [email: :string], 1, 1) |> ExAws.request()
 
     user1 = %Test.User{
       email: "foo@bar.com",
@@ -105,7 +112,8 @@ defmodule ExAws.DynamoIntegrationTest do
     }
 
     assert {:ok, _} =
-             Dynamo.transact_write_items(put: {"TestTransactions", user1}, put: {"TestTransactions2", user1}) |> ExAws.request()
+             Dynamo.transact_write_items(put: {"TestTransactions", user1}, put: {"TestTransactions2", user1})
+             |> ExAws.request()
 
     user2 = %Test.User{
       email: "bar@bar.com",
@@ -142,17 +150,18 @@ defmodule ExAws.DynamoIntegrationTest do
     assert 24 == get1 |> Dynamo.decode_item(as: Test.User) |> Map.get(:age)
 
     assert {:ok, %{}} =
-      Dynamo.transact_write_items([
-        delete: {"TestTransactions", Map.take(user1, [:email])},
-        delete: {"TestTransactions2", Map.take(user2, [:email])}
-      ]) |> ExAws.request()
+             Dynamo.transact_write_items(
+               delete: {"TestTransactions", Map.take(user1, [:email])},
+               delete: {"TestTransactions2", Map.take(user2, [:email])}
+             )
+             |> ExAws.request()
 
     assert {:ok, %{"Responses" => [%{}, %{}]}} =
-       Dynamo.transact_get_items([
-         {"TestTransactions", Map.take(user1, [:email])},
-         {"TestTransactions2", Map.take(user2, [:email])}
-       ])
-       |> ExAws.request()
+             Dynamo.transact_get_items([
+               {"TestTransactions", Map.take(user1, [:email])},
+               {"TestTransactions2", Map.take(user2, [:email])}
+             ])
+             |> ExAws.request()
   end
 
   test "stream scan" do

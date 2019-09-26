@@ -11,6 +11,7 @@ defmodule DDBLocal do
   def delete_test_tables(tables) do
     tables
     |> Enum.each(fn table -> Dynamo.delete_table(table) |> ExAws.request() end)
+
     :ok
   end
 end

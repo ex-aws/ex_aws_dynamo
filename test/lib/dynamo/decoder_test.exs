@@ -6,38 +6,38 @@ defmodule ExAws.Dynamo.DecoderTest do
   if Application.get_env(:ex_aws, :dynamodb, [])[:decode_sets] do
     test "decoder decodes numberset to a mapset of numbers" do
       assert %{"NS" => ["1", "2", "3"]}
-            |> Decoder.decode() == MapSet.new([1, 2, 3])
+             |> Decoder.decode() == MapSet.new([1, 2, 3])
 
       assert %{"NS" => [1, 2, 3]}
-            |> Decoder.decode() == MapSet.new([1, 2, 3])
+             |> Decoder.decode() == MapSet.new([1, 2, 3])
     end
 
     test "decoder decodes stringset to a mapset of strings" do
       assert %{"SS" => ["foo", "bar", "baz"]}
-        |> Decoder.decode() == MapSet.new(["foo", "bar", "baz"])
+             |> Decoder.decode() == MapSet.new(["foo", "bar", "baz"])
     end
 
     test "decoder decodes binaryset to a mapset of strings" do
       assert %{"BS" => ["U3Vubnk=", "UmFpbnk=", "U25vd3k="]}
-        |> Decoder.decode() == MapSet.new(["U3Vubnk=", "UmFpbnk=", "U25vd3k="])
+             |> Decoder.decode() == MapSet.new(["U3Vubnk=", "UmFpbnk=", "U25vd3k="])
     end
   else
     test "decoder decodes numberset to a list of numbers" do
       assert %{"NS" => ["1", "2", "3"]}
-            |> Decoder.decode() == [1, 2, 3]
+             |> Decoder.decode() == [1, 2, 3]
 
       assert %{"NS" => [1, 2, 3]}
-            |> Decoder.decode() == [1, 2, 3]
+             |> Decoder.decode() == [1, 2, 3]
     end
 
     test "decoder decodes stringset to a list of strings" do
       assert %{"SS" => ["foo", "bar", "baz"]}
-        |> Decoder.decode() == ["foo", "bar", "baz"]
+             |> Decoder.decode() == ["foo", "bar", "baz"]
     end
 
     test "decoder decodes binaryset to a list of strings" do
       assert %{"BS" => ["U3Vubnk=", "UmFpbnk=", "U25vd3k="]}
-        |> Decoder.decode() == ["U3Vubnk=", "UmFpbnk=", "U25vd3k="]
+             |> Decoder.decode() == ["U3Vubnk=", "UmFpbnk=", "U25vd3k="]
     end
   end
 

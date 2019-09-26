@@ -77,7 +77,7 @@ defmodule ExAws.Dynamo do
   @type primary_key :: [{atom, binary}] | %{atom => binary}
   @type exclusive_start_key_vals :: [{atom, binary}] | %{atom => binary}
   @type expression_attribute_names_vals :: %{binary => binary}
-  @type expression_attribute_values_vals :: [{atom, Dynamo.Encodable.t}] | %{atom => Dynamo.Encodable.t}
+  @type expression_attribute_values_vals :: [{atom, Dynamo.Encodable.t()}] | %{atom => Dynamo.Encodable.t()}
   @type return_consumed_capacity_vals ::
           :none
           | :total
@@ -169,24 +169,35 @@ defmodule ExAws.Dynamo do
           write_capacity :: pos_integer,
           billing_mode :: dynamo_billing_types
         ) :: ExAws.Operation.JSON.t()
-  def create_table(name, primary_key, key_definitions, read_capacity, write_capacity, billing_mode \\ @default_billing_mode)
   def create_table(
-    name,
-    primary_key,
-    key_definitions,
-    read_capacity,
-    write_capacity,
-    billing_mode)
+        name,
+        primary_key,
+        key_definitions,
+        read_capacity,
+        write_capacity,
+        billing_mode \\ @default_billing_mode
+      )
+
+  def create_table(
+        name,
+        primary_key,
+        key_definitions,
+        read_capacity,
+        write_capacity,
+        billing_mode
+      )
       when is_atom(primary_key) or is_binary(primary_key) do
     create_table(name, [{primary_key, :hash}], key_definitions, read_capacity, write_capacity, billing_mode)
   end
+
   def create_table(
-    name,
-    key_schema,
-    key_definitions,
-    read_capacity,
-    write_capacity,
-    billing_mode)
+        name,
+        key_schema,
+        key_definitions,
+        read_capacity,
+        write_capacity,
+        billing_mode
+      )
       when is_list(key_schema) do
     create_table(name, key_schema, key_definitions, read_capacity, write_capacity, [], [], billing_mode)
   end
@@ -242,12 +253,13 @@ defmodule ExAws.Dynamo do
         local_indexes,
         billing_mode \\ @default_billing_mode
       ) do
-    data = build_billing_mode(read_capacity, write_capacity, billing_mode)
-          |> Map.merge( %{
-              "TableName" => name,
-              "AttributeDefinitions" => key_definitions |> encode_key_definitions,
-              "KeySchema" => key_schema |> build_key_schema,
-            })
+    data =
+      build_billing_mode(read_capacity, write_capacity, billing_mode)
+      |> Map.merge(%{
+        "TableName" => name,
+        "AttributeDefinitions" => key_definitions |> encode_key_definitions,
+        "KeySchema" => key_schema |> build_key_schema
+      })
 
     data =
       %{
@@ -262,7 +274,6 @@ defmodule ExAws.Dynamo do
           Map.put(data, name, indices)
       end)
 
-
     request(:create_table, data)
   end
 
@@ -275,7 +286,11 @@ defmodule ExAws.Dynamo do
     end)
   end
 
-  @spec build_billing_mode(read_capacity :: pos_integer, write_capacity :: pos_integer, billing_mode :: dynamo_billing_types) :: Map.t()
+  @spec build_billing_mode(
+          read_capacity :: pos_integer,
+          write_capacity :: pos_integer,
+          billing_mode :: dynamo_billing_types
+        ) :: Map.t()
   defp build_billing_mode(read_capacity, write_capacity, :provisioned) do
     %{
       "BillingMode" => "PROVISIONED",
@@ -285,6 +300,7 @@ defmodule ExAws.Dynamo do
       }
     }
   end
+
   # Pay-per-request (AKA on-demand) tables do not have read/write capacities.
   defp build_billing_mode(_read_capacity, _write_capacity, :pay_per_request) do
     %{"BillingMode" => "PAY_PER_REQUEST"}
@@ -312,7 +328,7 @@ defmodule ExAws.Dynamo do
   defp maybe_convert_billing_mode(attributes) do
     case attributes[:billing_mode] do
       nil -> attributes
-      _   -> convert_billing_mode(attributes, attributes[:billing_mode])
+      _ -> convert_billing_mode(attributes, attributes[:billing_mode])
     end
   end
 
@@ -323,6 +339,7 @@ defmodule ExAws.Dynamo do
   @spec do_convert_billing_mode(attributes :: Keyword.t() | Map.t(), value :: String.t()) :: Keyword.t() | Map.t()
   defp do_convert_billing_mode(attributes, value) when is_map(attributes),
     do: Map.replace!(attributes, :billing_mode, value)
+
   defp do_convert_billing_mode(attributes, value) when is_list(attributes),
     do: Keyword.replace!(attributes, :billing_mode, value)
 
@@ -344,7 +361,8 @@ defmodule ExAws.Dynamo do
   defp build_time_to_live("", _enabled) do
     %{}
   end
-  defp build_time_to_live(ttl_attribute, enabled)  when ttl_attribute != nil do
+
+  defp build_time_to_live(ttl_attribute, enabled) when ttl_attribute != nil do
     %{
       "TimeToLiveSpecification" => %{
         "AttributeName" => ttl_attribute,
@@ -352,6 +370,7 @@ defmodule ExAws.Dynamo do
       }
     }
   end
+
   defp build_time_to_live(_ttl_attribute, _enabled) do
     %{}
   end

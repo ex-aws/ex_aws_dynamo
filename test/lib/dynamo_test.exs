@@ -104,7 +104,7 @@ defmodule ExAws.DynamoTest do
 
     assert Dynamo.update_table(
              "TestUsers",
-             [billing_mode: :pay_per_request]
+             billing_mode: :pay_per_request
            ).data == expected
 
     expected = %{
@@ -118,11 +118,8 @@ defmodule ExAws.DynamoTest do
 
     assert Dynamo.update_table(
              "TestUsers",
-             %{provisioned_throughput:
-               %{read_capacity_units: 1,
-                write_capacity_units: 1},
-              billing_mode: :provisioned
-             }).data == expected
+             %{provisioned_throughput: %{read_capacity_units: 1, write_capacity_units: 1}, billing_mode: :provisioned}
+           ).data == expected
 
     expected = %{
       "ProvisionedThroughput" => %{
@@ -132,12 +129,9 @@ defmodule ExAws.DynamoTest do
       "TableName" => "TestUsers"
     }
 
-    assert Dynamo.update_table(
-             "TestUsers",
-             [provisioned_throughput:
-               [read_capacity_units: 2,
-                write_capacity_units: 3]
-             ]).data == expected
+    assert Dynamo.update_table("TestUsers",
+             provisioned_throughput: [read_capacity_units: 2, write_capacity_units: 3]
+           ).data == expected
   end
 
   test "#scan" do

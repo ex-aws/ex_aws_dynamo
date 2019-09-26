@@ -68,15 +68,16 @@ defmodule ExAws.Dynamo.Mixfile do
   end
 
   defp run_tests(_) do
-    Mix.shell.cmd(
+    Mix.shell().cmd(
       "mix test --color",
       env: [{"MIX_ENV", "test"}]
     )
   end
 
   defp run_options_tests(_) do
-    IO.puts "\nRunning tests with options enabled."
-    Mix.shell.cmd(
+    IO.puts("\nRunning tests with options enabled.")
+
+    Mix.shell().cmd(
       "mix test --color",
       env: [{"MIX_ENV", "test_options"}]
     )

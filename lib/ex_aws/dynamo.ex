@@ -681,12 +681,6 @@ defmodule ExAws.Dynamo do
     request(:delete_item, data)
   end
 
-  @doc """
-  Update item in table
-
-  For update_args format see
-  http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateItem.html
-  """
   @type transact_get_item_opts :: [
           {:expression_attribute_names, expression_attribute_names_vals}
           | {:projection_expression, binary}
@@ -702,6 +696,10 @@ defmodule ExAws.Dynamo do
 
   @spec transact_get_items(items :: [transact_get_item], transact_get_items_opts) :: ExAws.Operation.JSON.t()
   @spec transact_get_items(items :: [transact_get_item]) :: ExAws.Operation.JSON.t()
+
+  @doc """
+  A synchronous operation that retrieves multiple items from one or more tables (but not from indexes) in a single account and region
+  """
   def transact_get_items(items, opts \\ []) do
     data =
       opts
@@ -765,6 +763,9 @@ defmodule ExAws.Dynamo do
           | {:return_item_collection_metrics, return_item_collection_metrics_vals}
         ]
 
+  @doc """
+  A synchronous write operation that groups up to 25 action requests
+  """
   @spec transact_write_items(items :: [transact_write_item], transact_write_items_opts) :: ExAws.Operation.JSON.t()
   @spec transact_write_items(items :: [transact_write_item]) :: ExAws.Operation.JSON.t()
   def transact_write_items(items, opts \\ []) do

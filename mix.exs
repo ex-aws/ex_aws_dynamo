@@ -1,7 +1,7 @@
 defmodule ExAws.Dynamo.Mixfile do
   use Mix.Project
 
-  @version "2.2.2"
+  @version "2.3.0"
   @service "dynamo"
   @url "https://github.com/ex-aws/ex_aws_#{@service}"
   @name __MODULE__ |> Module.split() |> Enum.take(2) |> Enum.join(".")
@@ -68,15 +68,16 @@ defmodule ExAws.Dynamo.Mixfile do
   end
 
   defp run_tests(_) do
-    Mix.shell.cmd(
+    Mix.shell().cmd(
       "mix test --color",
       env: [{"MIX_ENV", "test"}]
     )
   end
 
   defp run_options_tests(_) do
-    IO.puts "\nRunning tests with options enabled."
-    Mix.shell.cmd(
+    IO.puts("\nRunning tests with options enabled.")
+
+    Mix.shell().cmd(
       "mix test --color",
       env: [{"MIX_ENV", "test_options"}]
     )

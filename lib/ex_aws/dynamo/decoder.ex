@@ -39,9 +39,11 @@ defmodule ExAws.Dynamo.Decoder do
   def decode(%{"B" => value}), do: Base.decode64!(value)
   def decode(%{"S" => value}), do: value
   def decode(%{"M" => value}), do: value |> decode
+
   if Application.get_env(:ex_aws, :dynamodb, [])[:decode_sets] do
     def decode(%{"BS" => values}), do: MapSet.new(values)
     def decode(%{"SS" => values}), do: MapSet.new(values)
+
     def decode(%{"NS" => values}) do
       values
       |> Stream.map(&binary_to_number/1)
@@ -50,6 +52,7 @@ defmodule ExAws.Dynamo.Decoder do
   else
     def decode(%{"BS" => values}), do: values
     def decode(%{"SS" => values}), do: values
+
     def decode(%{"NS" => values}) do
       Enum.map(values, &binary_to_number/1)
     end

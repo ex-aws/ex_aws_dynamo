@@ -104,7 +104,7 @@ defmodule ExAws.DynamoTest do
 
     assert Dynamo.update_table(
              "TestUsers",
-             [billing_mode: :pay_per_request]
+             billing_mode: :pay_per_request
            ).data == expected
 
     expected = %{
@@ -118,11 +118,8 @@ defmodule ExAws.DynamoTest do
 
     assert Dynamo.update_table(
              "TestUsers",
-             %{provisioned_throughput:
-               %{read_capacity_units: 1,
-                write_capacity_units: 1},
-              billing_mode: :provisioned
-             }).data == expected
+             %{provisioned_throughput: %{read_capacity_units: 1, write_capacity_units: 1}, billing_mode: :provisioned}
+           ).data == expected
 
     expected = %{
       "ProvisionedThroughput" => %{
@@ -132,12 +129,9 @@ defmodule ExAws.DynamoTest do
       "TableName" => "TestUsers"
     }
 
-    assert Dynamo.update_table(
-             "TestUsers",
-             [provisioned_throughput:
-               [read_capacity_units: 2,
-                write_capacity_units: 3]
-             ]).data == expected
+    assert Dynamo.update_table("TestUsers",
+             provisioned_throughput: [read_capacity_units: 2, write_capacity_units: 3]
+           ).data == expected
   end
 
   test "#scan" do
@@ -290,6 +284,59 @@ defmodule ExAws.DynamoTest do
     request = Dynamo.describe_time_to_live("Users")
 
     assert Enum.at(request.headers, 0) == {"x-amz-target", "DynamoDB_20120810.DescribeTimeToLive"}
+    assert request.data == expected
+  end
+
+  test "transact_get_items" do
+    expected = %{
+      "TransactItems" => [
+        %{
+          "Get" => %{
+            "Key" => %{"email" => %{"S" => "foo@baz.com"}},
+            "TableName" => "Users",
+            "ProjectionExpression" => "email,age"
+          }
+        }
+      ]
+    }
+
+    request =
+      Dynamo.transact_get_items([
+        {"Users", %{"email" => "foo@baz.com"}, projection_expression: "email,age"}
+      ])
+
+    assert Enum.at(request.headers, 0) == {"x-amz-target", "DynamoDB_20120810.TransactGetItems"}
+    assert request.data == expected
+  end
+
+  test "transact_write_items" do
+    expected = %{
+      "TransactItems" => [
+        %{
+          "Update" => %{
+            "ConditionExpression" => "Likes = :old_likes",
+            "ExpressionAttributeValues" => %{
+              ":likes" => %{"N" => "9"},
+              ":old_likes" => %{"N" => "99"}
+            },
+            "Key" => %{"email" => %{"S" => "foo@baz.com"}},
+            "TableName" => "Users",
+            "UpdateExpression" => "set Likes = :likes"
+          }
+        }
+      ]
+    }
+
+    request =
+      Dynamo.transact_write_items(
+        update:
+          {"Users", %{"email" => "foo@baz.com"},
+           update_expression: "set Likes = :likes",
+           condition_expression: "Likes = :old_likes",
+           expression_attribute_values: [likes: 9, old_likes: 99]}
+      )
+
+    assert Enum.at(request.headers, 0) == {"x-amz-target", "DynamoDB_20120810.TransactWriteItems"}
     assert request.data == expected
   end
 end

@@ -1,3 +1,5 @@
+# Sample test.exs configuration file. See README for more info.
+
 use Mix.Config
 
 config :ex_aws,
@@ -9,5 +11,5 @@ config :ex_aws,
 config :ex_aws, :dynamodb,
   scheme: "http://",
   host: "localhost",
-  port: 8000,
+  port: CHOOSE_YOUR_TEST_PORT,
   region: "us-east-1"

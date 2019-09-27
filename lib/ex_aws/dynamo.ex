@@ -60,7 +60,7 @@ defmodule ExAws.Dynamo do
   http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Operations.html
   """
 
-  import ExAws.Utils, only: [camelize_keys: 1, camelize_keys: 2, upcase: 1]
+  import ExAws.Utils, only: [camelize: 1, camelize_keys: 1, camelize_keys: 2, upcase: 1]
   alias __MODULE__
 
   @nested_opts [:exclusive_start_key, :expression_attribute_values, :expression_attribute_names]
@@ -77,7 +77,7 @@ defmodule ExAws.Dynamo do
   @type primary_key :: [{atom, binary}] | %{atom => binary}
   @type exclusive_start_key_vals :: [{atom, binary}] | %{atom => binary}
   @type expression_attribute_names_vals :: %{binary => binary}
-  @type expression_attribute_values_vals :: [{atom, Dynamo.Encodable.t}] | %{atom => Dynamo.Encodable.t}
+  @type expression_attribute_values_vals :: [{atom, Dynamo.Encodable.t()}] | %{atom => Dynamo.Encodable.t()}
   @type return_consumed_capacity_vals ::
           :none
           | :total
@@ -169,24 +169,35 @@ defmodule ExAws.Dynamo do
           write_capacity :: pos_integer,
           billing_mode :: dynamo_billing_types
         ) :: ExAws.Operation.JSON.t()
-  def create_table(name, primary_key, key_definitions, read_capacity, write_capacity, billing_mode \\ @default_billing_mode)
   def create_table(
-    name,
-    primary_key,
-    key_definitions,
-    read_capacity,
-    write_capacity,
-    billing_mode)
+        name,
+        primary_key,
+        key_definitions,
+        read_capacity,
+        write_capacity,
+        billing_mode \\ @default_billing_mode
+      )
+
+  def create_table(
+        name,
+        primary_key,
+        key_definitions,
+        read_capacity,
+        write_capacity,
+        billing_mode
+      )
       when is_atom(primary_key) or is_binary(primary_key) do
     create_table(name, [{primary_key, :hash}], key_definitions, read_capacity, write_capacity, billing_mode)
   end
+
   def create_table(
-    name,
-    key_schema,
-    key_definitions,
-    read_capacity,
-    write_capacity,
-    billing_mode)
+        name,
+        key_schema,
+        key_definitions,
+        read_capacity,
+        write_capacity,
+        billing_mode
+      )
       when is_list(key_schema) do
     create_table(name, key_schema, key_definitions, read_capacity, write_capacity, [], [], billing_mode)
   end
@@ -242,12 +253,13 @@ defmodule ExAws.Dynamo do
         local_indexes,
         billing_mode \\ @default_billing_mode
       ) do
-    data = build_billing_mode(read_capacity, write_capacity, billing_mode)
-          |> Map.merge( %{
-              "TableName" => name,
-              "AttributeDefinitions" => key_definitions |> encode_key_definitions,
-              "KeySchema" => key_schema |> build_key_schema,
-            })
+    data =
+      build_billing_mode(read_capacity, write_capacity, billing_mode)
+      |> Map.merge(%{
+        "TableName" => name,
+        "AttributeDefinitions" => key_definitions |> encode_key_definitions,
+        "KeySchema" => key_schema |> build_key_schema
+      })
 
     data =
       %{
@@ -262,7 +274,6 @@ defmodule ExAws.Dynamo do
           Map.put(data, name, indices)
       end)
 
-
     request(:create_table, data)
   end
 
@@ -275,7 +286,11 @@ defmodule ExAws.Dynamo do
     end)
   end
 
-  @spec build_billing_mode(read_capacity :: pos_integer, write_capacity :: pos_integer, billing_mode :: dynamo_billing_types) :: Map.t()
+  @spec build_billing_mode(
+          read_capacity :: pos_integer,
+          write_capacity :: pos_integer,
+          billing_mode :: dynamo_billing_types
+        ) :: Map.t()
   defp build_billing_mode(read_capacity, write_capacity, :provisioned) do
     %{
       "BillingMode" => "PROVISIONED",
@@ -285,6 +300,7 @@ defmodule ExAws.Dynamo do
       }
     }
   end
+
   # Pay-per-request (AKA on-demand) tables do not have read/write capacities.
   defp build_billing_mode(_read_capacity, _write_capacity, :pay_per_request) do
     %{"BillingMode" => "PAY_PER_REQUEST"}
@@ -312,7 +328,7 @@ defmodule ExAws.Dynamo do
   defp maybe_convert_billing_mode(attributes) do
     case attributes[:billing_mode] do
       nil -> attributes
-      _   -> convert_billing_mode(attributes, attributes[:billing_mode])
+      _ -> convert_billing_mode(attributes, attributes[:billing_mode])
     end
   end
 
@@ -323,6 +339,7 @@ defmodule ExAws.Dynamo do
   @spec do_convert_billing_mode(attributes :: Keyword.t() | Map.t(), value :: String.t()) :: Keyword.t() | Map.t()
   defp do_convert_billing_mode(attributes, value) when is_map(attributes),
     do: Map.replace!(attributes, :billing_mode, value)
+
   defp do_convert_billing_mode(attributes, value) when is_list(attributes),
     do: Keyword.replace!(attributes, :billing_mode, value)
 
@@ -333,8 +350,7 @@ defmodule ExAws.Dynamo do
   end
 
   @doc "Update time to live"
-  @spec update_time_to_live(table :: binary, ttl_attribute :: binary, enabled :: boolean) ::
-          ExAws.Operation.JSON.t()
+  @spec update_time_to_live(table :: binary, ttl_attribute :: binary, enabled :: boolean) :: ExAws.Operation.JSON.t()
   def update_time_to_live(table, ttl_attribute, enabled) do
     data = build_time_to_live(ttl_attribute, enabled) |> Map.merge(%{"TableName" => table})
 
@@ -345,7 +361,8 @@ defmodule ExAws.Dynamo do
   defp build_time_to_live("", _enabled) do
     %{}
   end
-  defp build_time_to_live(ttl_attribute, enabled)  when ttl_attribute != nil do
+
+  defp build_time_to_live(ttl_attribute, enabled) when ttl_attribute != nil do
     %{
       "TimeToLiveSpecification" => %{
         "AttributeName" => ttl_attribute,
@@ -353,6 +370,7 @@ defmodule ExAws.Dynamo do
       }
     }
   end
+
   defp build_time_to_live(_ttl_attribute, _enabled) do
     %{}
   end
@@ -403,7 +421,7 @@ defmodule ExAws.Dynamo do
   def scan(name, opts \\ []) do
     data =
       opts
-      |> build_opts
+      |> build_opts()
       |> Map.merge(%{"TableName" => name})
 
     request(:scan, data, %{stream_builder: &ExAws.Dynamo.Lazy.stream_scan(name, opts, &1)})
@@ -443,7 +461,7 @@ defmodule ExAws.Dynamo do
   def query(name, opts \\ []) do
     data =
       opts
-      |> build_opts
+      |> build_opts()
       |> Map.merge(%{"TableName" => name})
 
     request(:query, data, %{stream_builder: &ExAws.Dynamo.Lazy.stream_query(name, opts, &1)})
@@ -487,8 +505,7 @@ defmodule ExAws.Dynamo do
           | {:keys, [primary_key]}
         ]
   @spec batch_get_item(%{table_name => get_item}) :: ExAws.Operation.JSON.t()
-  @spec batch_get_item(%{table_name => get_item}, opts :: batch_get_item_opts) ::
-          ExAws.Operation.JSON.t()
+  @spec batch_get_item(%{table_name => get_item}, opts :: batch_get_item_opts) :: ExAws.Operation.JSON.t()
   def batch_get_item(data, opts \\ []) do
     request_items =
       data
@@ -526,12 +543,11 @@ defmodule ExAws.Dynamo do
           | {:return_values, return_values_vals}
         ]
   @spec put_item(table_name :: table_name, record :: map()) :: ExAws.Operation.JSON.t()
-  @spec put_item(table_name :: table_name, record :: map(), opts :: put_item_opts) ::
-          ExAws.Operation.JSON.t()
+  @spec put_item(table_name :: table_name, record :: map(), opts :: put_item_opts) :: ExAws.Operation.JSON.t()
   def put_item(name, record, opts \\ []) do
     data =
       opts
-      |> build_opts
+      |> build_opts()
       |> Map.merge(%{
         "TableName" => name,
         "Item" => Dynamo.Encoder.encode_root(record)
@@ -558,8 +574,7 @@ defmodule ExAws.Dynamo do
           | {:return_item_collection_metrics, return_item_collection_metrics_vals}
         ]
   @spec batch_write_item(%{table_name => [write_item]}) :: ExAws.Operation.JSON.t()
-  @spec batch_write_item(%{table_name => [write_item]}, opts :: batch_write_item_opts) ::
-          ExAws.Operation.JSON.t()
+  @spec batch_write_item(%{table_name => [write_item]}, opts :: batch_write_item_opts) :: ExAws.Operation.JSON.t()
   def batch_write_item(data, opts \\ []) do
     request_items =
       data
@@ -598,7 +613,7 @@ defmodule ExAws.Dynamo do
   def get_item(name, primary_key, opts \\ []) do
     data =
       opts
-      |> build_opts
+      |> build_opts()
       |> Map.merge(%{
         "TableName" => name,
         "Key" => primary_key |> Map.new() |> Dynamo.Encoder.encode_root()
@@ -630,7 +645,7 @@ defmodule ExAws.Dynamo do
   def update_item(table_name, primary_key, update_opts) do
     data =
       update_opts
-      |> build_opts
+      |> build_opts()
       |> Map.merge(%{
         "TableName" => table_name,
         "Key" => primary_key |> Map.new() |> Dynamo.Encoder.encode_root()
@@ -648,8 +663,7 @@ defmodule ExAws.Dynamo do
           | {:return_item_collection_metrics, return_item_collection_metrics_vals}
           | {:return_values, return_values_vals}
         ]
-  @spec delete_item(table_name :: table_name, primary_key :: primary_key) ::
-          ExAws.Operation.JSON.t()
+  @spec delete_item(table_name :: table_name, primary_key :: primary_key) :: ExAws.Operation.JSON.t()
   @spec delete_item(
           table_name :: table_name,
           primary_key :: primary_key,
@@ -658,7 +672,7 @@ defmodule ExAws.Dynamo do
   def delete_item(name, primary_key, opts \\ []) do
     data =
       opts
-      |> build_opts
+      |> build_opts()
       |> Map.merge(%{
         "TableName" => name,
         "Key" => primary_key |> Map.new() |> Dynamo.Encoder.encode_root()
@@ -667,8 +681,107 @@ defmodule ExAws.Dynamo do
     request(:delete_item, data)
   end
 
+  @type transact_get_item_opts :: [
+          {:expression_attribute_names, expression_attribute_names_vals}
+          | {:projection_expression, binary}
+        ]
+
+  @type transact_get_item ::
+          {table_name :: binary, primary_key :: primary_key}
+          | {table_name :: binary, primary_key :: primary_key, transact_get_item_opts}
+
+  @type transact_get_items_opts :: [
+          {:return_consumed_capacity, return_consumed_capacity_vals}
+        ]
+
+  @spec transact_get_items(items :: [transact_get_item], transact_get_items_opts) :: ExAws.Operation.JSON.t()
+  @spec transact_get_items(items :: [transact_get_item]) :: ExAws.Operation.JSON.t()
+
+  @doc """
+  A synchronous operation that retrieves multiple items from one or more tables (but not from indexes) in a single account and region
+  """
+  def transact_get_items(items, opts \\ []) do
+    data =
+      opts
+      |> build_opts()
+      |> Map.merge(%{
+        "TransactItems" => Enum.map(items, &build_transaction_item({:get, &1}))
+      })
+
+    request(:transact_get_items, data)
+  end
+
+  defp build_transaction_item({method, {table, item}}), do: build_transaction_item({method, {table, item, []}})
+
+  defp build_transaction_item({method, {table, item, opts}}) do
+    build_transaction_item(method, table, item, opts)
+  end
+
+  defp build_transaction_item(method, table_name, item, opts) do
+    item = item |> Dynamo.Encoder.encode_root()
+
+    details =
+      opts
+      |> build_opts()
+      |> Map.merge(%{
+        "TableName" => table_name,
+        transaction_item_key(method) => item
+      })
+
+    %{camelize(method) => details}
+  end
+
+  defp transaction_item_key(:put), do: "Item"
+  defp transaction_item_key(_any), do: "Key"
+
+  @type return_values_on_condition_check_failure_vals :: :all_old | :none
+
+  @type transact_standard_item_opts :: [
+          {:condition_expression, binary}
+          | {:expression_attribute_names, expression_attribute_names_vals}
+          | {:expression_attribute_values, expression_attribute_values_vals}
+          | {:return_values_on_condition_check_failure, return_values_on_condition_check_failure_vals}
+        ]
+
+  @type transact_update_item_opts :: [
+          {:condition_expression, binary}
+          | {:expression_attribute_names, expression_attribute_names_vals}
+          | {:expression_attribute_values, expression_attribute_values_vals}
+          | {:return_values_on_condition_check_failure, return_values_on_condition_check_failure_vals}
+          | {:update_expression, binary}
+        ]
+
+  @type transact_write_item ::
+          {:condition_check, {table_name :: binary, key :: primary_key, transact_standard_item_opts}}
+          | {:delete, {table_name :: binary, key :: primary_key, transact_standard_item_opts}}
+          | {:put, {table_name :: binary, item :: map(), transact_standard_item_opts}}
+          | {:update, {table_name :: binary, key :: primary_key, transact_update_item_opts}}
+
+  @type transact_write_items_opts :: [
+          {:client_request_token, binary}
+          | {:return_consumed_capacity, return_consumed_capacity_vals}
+          | {:return_item_collection_metrics, return_item_collection_metrics_vals}
+        ]
+
+  @doc """
+  A synchronous write operation that groups up to 25 action requests
+  """
+  @spec transact_write_items(items :: [transact_write_item], transact_write_items_opts) :: ExAws.Operation.JSON.t()
+  @spec transact_write_items(items :: [transact_write_item]) :: ExAws.Operation.JSON.t()
+  def transact_write_items(items, opts \\ []) do
+    data =
+      opts
+      |> build_opts()
+      |> Map.merge(%{
+        "TransactItems" => Enum.map(items, &build_transaction_item/1)
+      })
+
+    request(:transact_write_items, data)
+  end
+
   ## Options builder
   ###################
+
   defp build_opts(opts) do
     opts = opts |> Map.new()
 

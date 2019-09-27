@@ -12,7 +12,16 @@ defmodule ExAws.DynamoIntegrationTest do
   @moduletag :dynamo
 
   setup_all do
-    tables = [ "TestUsers", Test.User, "TestSeveralUsers", TestFoo, "test_books", "TestUsersWithRange" ]
+    tables = [
+      "TestUsers",
+      Test.User,
+      "TestSeveralUsers",
+      TestFoo,
+      "test_books",
+      "TestUsersWithRange",
+      "TestTransactions",
+      "TestTransactions2"
+    ]
 
     DDBLocal.delete_test_tables(tables)
 
@@ -63,8 +72,7 @@ defmodule ExAws.DynamoIntegrationTest do
   end
 
   test "put and get several items with map values work" do
-    {:ok, _} =
-      Dynamo.create_table("TestSeveralUsers", :email, [email: :string], 1, 1) |> ExAws.request()
+    {:ok, _} = Dynamo.create_table("TestSeveralUsers", :email, [email: :string], 1, 1) |> ExAws.request()
 
     user1 = %Test.User{
       email: "foo@bar.com",
@@ -90,6 +98,70 @@ defmodule ExAws.DynamoIntegrationTest do
 
     assert Enum.at(items, 0) == user1
     assert Enum.at(items, 1) == user2
+  end
+
+  test "transactions work" do
+    {:ok, _} = Dynamo.create_table("TestTransactions", :email, [email: :string], 1, 1) |> ExAws.request()
+    {:ok, _} = Dynamo.create_table("TestTransactions2", :email, [email: :string], 1, 1) |> ExAws.request()
+
+    user1 = %Test.User{
+      email: "foo@bar.com",
+      name: %{first: "bob", last: "bubba"},
+      age: 23,
+      admin: false
+    }
+
+    assert {:ok, _} =
+             Dynamo.transact_write_items(put: {"TestTransactions", user1}, put: {"TestTransactions2", user1})
+             |> ExAws.request()
+
+    user2 = %Test.User{
+      email: "bar@bar.com",
+      name: %{first: "jane", last: "bubba"},
+      age: 21,
+      admin: true
+    }
+
+    assert {:error, {"TransactionCanceledException", _}} =
+             Dynamo.transact_write_items(
+               put: {"TestTransactions", user2},
+               condition_check:
+                 {"TestTransactions2", Map.take(user2, [:email]), condition_expression: "attribute_exists(age)"}
+             )
+             |> ExAws.request()
+
+    assert {:ok, %{}} =
+             Dynamo.transact_write_items(
+               put: {"TestTransactions", user2},
+               put: {"TestTransactions2", user2},
+               update:
+                 {"TestTransactions", Map.take(user1, [:email]),
+                  update_expression: "set age = age + :one", expression_attribute_values: [one: 1]}
+             )
+             |> ExAws.request()
+
+    assert {:ok, %{"Responses" => [get1, _get2]}} =
+             Dynamo.transact_get_items([
+               {"TestTransactions", Map.take(user1, [:email])},
+               {"TestTransactions2", Map.take(user2, [:email])}
+             ])
+             |> ExAws.request()
+
+    assert 24 == get1 |> Dynamo.decode_item(as: Test.User) |> Map.get(:age)
+
+    assert {:ok, %{}} =
+             Dynamo.transact_write_items(
+               delete: {"TestTransactions", Map.take(user1, [:email])},
+               delete: {"TestTransactions2", Map.take(user2, [:email])}
+             )
+             |> ExAws.request()
+
+    assert {:ok, %{"Responses" => [%{}, %{}]}} =
+             Dynamo.transact_get_items([
+               {"TestTransactions", Map.take(user1, [:email])},
+               {"TestTransactions2", Map.take(user2, [:email])}
+             ])
+             |> ExAws.request()
   end
 
   test "stream scan" do

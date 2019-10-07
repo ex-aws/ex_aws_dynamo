@@ -62,22 +62,9 @@ config :ex_aws, :dynamodb,
   region: "us-east-1"
 ```
 
-Before setting the `port`, be aware that `integration_test.exs` will create and delete tables with the names `"TestUsers", Test.User, "TestSeveralUsers", TestFoo, "test_books", "TestUsersWithRange"` - be careful when setting the port, as these operations may interfere with your current tables if they share any of those names.
-
-If you do not have a running local instance of DynamoDB and/or you don't provide a `config/test.exs` file, the integration tests will hang for a few seconds before returning `invalid` - this will not interfere with the successful execution of other tests.
-=======
-
-config :ex_aws, :dynamodb,
-  scheme: "http://",
-  host: "localhost",
-  port: CHOOSE_YOUR_TEST_PORT,
-  region: "us-east-1"
-```
-
-Before setting the `port`, be aware that `integration_test.exs` will create and delete tables with the names `"TestUsers", "Test.User", "TestSeveralUsers", "TestFoo", "test_books", "TestUsersWithRange", "TestTransactions", "TestTransactions2"` - be careful when setting the port, as these operations may affect your current tables if they share any of those names.
+Before setting the `port`, be aware that `integration_test.exs` will create and delete tables with the names `"TestUsers"`, `"Test.User"`, `"TestSeveralUsers"`, `"TestFoo"`, `"test_books"`, `"TestUsersWithRange"`, `"TestTransactions"`, `"TestTransactions2"` - be careful when setting the port, as these operations may affect your current tables if they share any of those names.
 
 If you do not have a running local instance of DynamoDB and/or you don't provide a `config/test.exs` file, the integration tests will hang for a few seconds before returning `invalid` - this will not interfere with the successful execution of the other tests.
->>>>>>> transactions
 
 ## License
 

@@ -228,10 +228,10 @@ defmodule ExAws.DynamoIntegrationTest do
 
     {:error, :econnrefused} ->
       IO.puts(
-        "No running local instance of DynamoDB found on port #{DDBLocal.get_port()}. Skipping tests in #{__MODULE__}..."
+        "\nNo running local instance of DynamoDB found on port #{DDBLocal.get_port()}. Skipping tests in #{__MODULE__}..."
       )
 
     {:error, message} ->
-      IO.puts("#{message} Skipping tests in #{__MODULE__}...")
+      IO.puts("\n#{message} Skipping tests in #{__MODULE__}...")
   end
 end

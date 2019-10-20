@@ -1,7 +1,7 @@
 defmodule ExAws.Dynamo.Mixfile do
   use Mix.Project
 
-  @version "2.3.1"
+  @version "2.3.2"
   @service "dynamo"
   @url "https://github.com/ex-aws/ex_aws_#{@service}"
   @name __MODULE__ |> Module.split() |> Enum.take(2) |> Enum.join(".")

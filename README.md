@@ -43,7 +43,7 @@ This application supports three test commands:
 
 ### Integration tests (optional)
 
-The tests in `test/lib/dynamo/integration_test.exs` will attempt to run against a running local instance of DynamoDB - in order to run these tests, you will need both a running local instance of DynamoDB as well as a `config/test.exs` file (currently gitignored) formatted like so:
+The tests in `test/lib/dynamo/integration_test.exs` will attempt to run against a running local instance of DynamoDB - in order to run these tests, you will need both a running local instance of DynamoDB as well as a `config/test.exs` file (currently .gitignored) formatted like so:
 
 `config/test.exs`
 ```elixir
@@ -62,9 +62,11 @@ config :ex_aws, :dynamodb,
   region: "us-east-1"
 ```
 
+(also available in `config/test.exs.example`)
+
 Before setting the `port`, be aware that `integration_test.exs` will create and delete tables with the names `"TestUsers"`, `"Test.User"`, `"TestSeveralUsers"`, `"TestFoo"`, `"test_books"`, `"TestUsersWithRange"`, `"TestTransactions"`, `"TestTransactions2"` - be careful when setting the port, as these operations may affect your current tables if they share any of those names.
 
-If you do not have a running local instance of DynamoDB and/or you don't provide a `config/test.exs` file, the integration tests will hang for a few seconds before returning `invalid` - this will not interfere with the successful execution of the other tests.
+If you do not have a running local instance of DynamoDB and/or you don't provide a valid `config/test.exs` file, the integration tests will be ignored.
 
 ## License
 

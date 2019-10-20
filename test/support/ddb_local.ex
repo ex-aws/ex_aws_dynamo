@@ -14,4 +14,19 @@ defmodule DDBLocal do
 
     :ok
   end
+
+  def try_connect() do
+    port = get_port()
+
+    if !is_nil(port) do
+      case :gen_tcp.connect('localhost', port, []) do
+        {:ok, _} -> :ok
+        {:error, error} -> {:error, error}
+      end
+    else
+      {:error, "No value provided for :port in config/test.exs."}
+    end
+  end
+
+  def get_port(), do: Application.get_env(:ex_aws, :dynamodb, [])[:port]
 end

@@ -75,7 +75,7 @@ defmodule ExAws.Dynamo.Mixfile do
   end
 
   defp run_options_tests(_) do
-    IO.puts("\nRunning tests with options enabled.")
+    IO.puts("\nRunning tests with options enabled...")
 
     Mix.shell().cmd(
       "mix test --color",

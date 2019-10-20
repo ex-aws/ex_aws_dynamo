@@ -50,7 +50,7 @@ The tests in `test/lib/dynamo/integration_test.exs` will attempt to run against 
 use Mix.Config
 
 config :ex_aws,
-  debug_requests: true,
+  debug_requests: false,
   access_key_id: "abcd",
   secret_access_key: "1234",
   region: "us-east-1"

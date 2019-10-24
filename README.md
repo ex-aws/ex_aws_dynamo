@@ -1,4 +1,7 @@
-# ExAws.Dynamo
+ExAws.Dynamo
+============
+[![Hex.pm](https://img.shields.io/hexpm/v/ex_aws_dynamo.svg)](https://hex.pm/packages/ex_aws_dynamo)
+[![Build Docs](https://img.shields.io/badge/hexdocs-release-blue.svg)](https://hexdocs.pm/ex_aws_dynamo/ExAws.Dynamo.html)
 
 Service module for https://github.com/ex-aws/ex_aws
 

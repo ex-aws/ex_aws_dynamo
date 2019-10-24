@@ -518,12 +518,15 @@ defmodule ExAws.Dynamo do
           table_query[:keys]
           |> Enum.map(&encode_values/1)
 
-        dynamized_table_query =
+        mapped_table_query =
           table_query
           |> Map.new()
+
+        dynamized_table_query =
+          mapped_table_query
           |> Map.drop(@special_opts ++ [:keys])
           |> camelize_keys
-          |> build_expression_attribute_names(Map.new(table_query))
+          |> build_expression_attribute_names(mapped_table_query)
           |> Map.put("Keys", keys)
 
         Map.put(query, table_name, dynamized_table_query)

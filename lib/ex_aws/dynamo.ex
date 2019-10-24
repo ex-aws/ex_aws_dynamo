@@ -483,7 +483,9 @@ defmodule ExAws.Dynamo do
       keys: [
         [api_key: "key1"],
         [api_key: "api_key2"]
-      ]
+      ],
+      expression_attribute_names: %{"#api_key" => "api_key"},
+      projection_expression: "#api_key"
     ],
     "Subscriptions" => %{
       keys: [
@@ -503,6 +505,8 @@ defmodule ExAws.Dynamo do
   @type get_item :: [
           {:consistent_read, boolean}
           | {:keys, [primary_key]}
+          | {:expression_attribute_names, expression_attribute_names_vals}
+          | {:projection_expression, binary}
         ]
   @spec batch_get_item(%{table_name => get_item}) :: ExAws.Operation.JSON.t()
   @spec batch_get_item(%{table_name => get_item}, opts :: batch_get_item_opts) :: ExAws.Operation.JSON.t()
@@ -519,7 +523,7 @@ defmodule ExAws.Dynamo do
           |> Map.new()
           |> Map.drop(@special_opts ++ [:keys])
           |> camelize_keys
-          |> build_expression_attribute_names(table_query)
+          |> build_expression_attribute_names(Map.new(table_query))
           |> Map.put("Keys", keys)
 
         Map.put(query, table_name, dynamized_table_query)

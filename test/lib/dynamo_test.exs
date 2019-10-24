@@ -186,7 +186,9 @@ defmodule ExAws.DynamoTest do
         "Subscriptions" => %{"Keys" => [%{id: %{"S" => "id1"}}]},
         "Users" => %{
           "ConsistentRead" => true,
-          "Keys" => [%{api_key: %{"S" => "key1"}}, %{api_key: %{"S" => "api_key2"}}]
+          "Keys" => [%{api_key: %{"S" => "key1"}}, %{api_key: %{"S" => "api_key2"}}],
+          "ExpressionAttributeNames" => %{"#api_key" => "api_key", "#id" => "id"},
+          "ProjectionExpression" => "#id, #api_key"
         }
       }
     }
@@ -198,7 +200,9 @@ defmodule ExAws.DynamoTest do
           keys: [
             [api_key: "key1"],
             [api_key: "api_key2"]
-          ]
+          ],
+          expression_attribute_names: %{"#id" => "id", "#api_key" => "api_key"},
+          projection_expression: "#id, #api_key"
         ],
         "Subscriptions" => %{keys: [%{id: "id1"}]}
       }).data

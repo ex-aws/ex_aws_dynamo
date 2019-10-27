@@ -19,6 +19,7 @@ defmodule ExAws.DynamoIntegrationTest do
           "TestSeveralUsers",
           TestFoo,
           "test_books",
+          "test_schools",
           "TestUsersWithRange",
           "TestTransactions",
           "TestTransactions2"
@@ -38,6 +39,11 @@ defmodule ExAws.DynamoIntegrationTest do
       test "#create and destroy table" do
         assert {:ok, %{"TableDescription" => %{"TableName" => "Elixir.TestFoo"}}} =
                  Dynamo.create_table(TestFoo, :shard_id, [shard_id: :string], 1, 1) |> ExAws.request()
+      end
+
+      test "#table_exists?" do
+        {:ok, _} = Dynamo.create_table("test_schools", :email, [email: :string], 1, 1) |> ExAws.request()
+        assert Dynamo.table_exists?("test_schools") == true
       end
 
       test "#create table with range" do

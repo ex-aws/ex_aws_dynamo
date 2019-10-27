@@ -24,7 +24,7 @@ defmodule DDBLocal do
         {:error, error} -> {:error, error}
       end
     else
-      {:error, "No value provided for :port in config/test.exs."}
+      {:error, "No value provided for :port in config/ddb_local_test.exs."}
     end
   end
 

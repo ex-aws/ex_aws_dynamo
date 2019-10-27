@@ -27,7 +27,7 @@ Documentation can be found at [https://hexdocs.pm/ex_aws_dynamo](https://hexdocs
 
 ### DynamoDB Local
 
-If you are running this module against a local version of DynamoDB, you'll want to make sure that you have installed the latest version, currently `1.11.477` (released 2019-02-06). You can find links to download the latest version [here](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBLocal.DownloadingAndRunning.html)
+If you are running this module against a local version of DynamoDB, you'll want to make sure that you have installed the latest version, currently `1.11.477` (released 2019-02-06). You can find links to download the latest version [here](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBLocal.DownloadingAndRunning.html).
 
 ## Configuration
 
@@ -52,11 +52,27 @@ This application supports three test commands:
 
 ### Integration tests (optional)
 
-The tests in `test/lib/dynamo/integration_test.exs` will attempt to run against a local instance of DynamoDB - in order to run these tests, you will need a running local instance of DynamoDB and will need to uncomment the contents of `config/test.exs`, setting the value of `:port` to match Dynamo's port.
+The tests in `test/lib/dynamo/integration_test.exs` will attempt to run against a local instance of DynamoDB - in order to run these tests, you will need both a running local instance of DynamoDB as well as a `config/ddb_local_test.exs` file (.gitignored) formatted like so:
 
-Before setting the `:port`, be aware that `integration_test.exs` will create and delete tables with the names `"TestUsers"`, `"Test.User"`, `"TestSeveralUsers"`, `"TestFoo"`, `"test_books"`, `"TestUsersWithRange"`, `"TestTransactions"`, `"TestTransactions2"` - be careful when setting the port, as these operations may affect your current tables if they share any of those names.
+`config/ddb_local_test.exs`
 
-If you do not have a running local instance of DynamoDB and/or you don't uncomment the contents of `config/test.exs`, the integration tests will be ignored.
+```elixir
+use Mix.Config
+
+config :ex_aws,
+  debug_requests: false, # set to true to monitor the DDB requests
+  access_key_id: "abcd",
+  secret_access_key: "1234",
+  region: "us-east-1"
+
+config :ex_aws, :dynamodb,
+  scheme: "http://",
+  host: "localhost",
+  port: SET_YOUR_PORT,
+  region: "us-east-1"
+```
+
+Before setting the `:port`, be aware that `test/lib/dynamo/integration_test.exs` will create and delete tables with the names `"TestUsers"`, `"Test.User"`, `"TestSeveralUsers"`, `"TestFoo"`, `"test_books"`, `"TestUsersWithRange"`, `"TestTransactions"`, `"TestTransactions2"` - be careful when setting the port, as these operations may affect your current tables if they share any of those names.
 
 ## License
 

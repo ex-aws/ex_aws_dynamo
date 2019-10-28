@@ -42,8 +42,9 @@ defmodule ExAws.DynamoIntegrationTest do
       end
 
       test "#table_exists?" do
+        assert Dynamo.Util.table_exists?("test_schools") == false
         {:ok, _} = Dynamo.create_table("test_schools", :email, [email: :string], 1, 1) |> ExAws.request()
-        assert Dynamo.table_exists?("test_schools") == true
+        assert Dynamo.Util.table_exists?("test_schools") == true
       end
 
       test "#create table with range" do

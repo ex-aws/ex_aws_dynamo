@@ -312,14 +312,6 @@ defmodule ExAws.Dynamo do
     request(:describe_table, %{"TableName" => name})
   end
 
-  @doc "Table exists"
-  @spec table_exists?(table_name :: String.t) :: boolean
-  def table_exists?(table_name) do
-    list_tables() |> ExAws.request!
-      |> (fn(r) -> r["TableNames"] end).()
-      |> Enum.member?(table_name)
-  end
-
   @doc "Update Table"
   @spec update_table(name :: binary, attributes :: Keyword.t() | Map.t()) :: ExAws.Operation.JSON.t()
   def update_table(name, attributes) do

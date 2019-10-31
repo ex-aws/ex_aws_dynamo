@@ -1,13 +1,14 @@
 defmodule ExAws.DynamoIntegrationTest do
   use ExUnit.Case, async: true
 
-  ## These tests run against DynamoDb Local
+  ## These tests run against DynamoDB Local
   #
   # http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Tools.DynamoDBLocal.html
-  # In this way they can safely delete data and tables without risking actual data on Dynamo
+  # In this way they can safely delete data and tables without risking actual data on production Dynamo.
 
   # Only run the tests in this module if we can find a running
-  # instance of DDB Local on the port specified in config/test.exs
+  # instance of DDB Local on the port specified in config/ddb_local_test.exs
+  # See README for more information.
   case DDBLocal.try_connect() do
     :ok ->
       alias ExAws.Dynamo, warn: false

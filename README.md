@@ -8,12 +8,11 @@ Service module for https://github.com/ex-aws/ex_aws
 ## Installation
 
 The package can be installed by adding `ex_aws_dynamo` to your list of dependencies in `mix.exs`
-along with `:ex_aws` and your preferred JSON codec and HTTP client:
+along with your preferred JSON codec and HTTP client:
 
 ```elixir
 def deps do
   [
-    {:ex_aws, "~> 2.1"},
     {:ex_aws_dynamo, "~> 3.0"},
     {:jason, "~> 1.0"},
     {:hackney, "~> 1.9"}

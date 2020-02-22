@@ -16,19 +16,11 @@ defmodule ExAws.Dynamo.Decoder do
   end
 
   @doc """
-  Convert dynamo format to elixir
+  Convert Dynamo format to Elixir
 
-  Functions which convert the dynamo style values into normal elixir values.
-  Use these if you just want the dynamo result to look more like elixir without
+  Functions which convert the Dynamo-style values into normal Elixir values.
+  Use these if you just want the Dynamo result to look more like Elixir without
   coercing it into a particular struct.
-
-  By default this will decode various dynamodb sets into lists. If you'd
-  prefer they be decoded into `MapSet`s instead, set `decode_sets: true` in
-  your compile-time (not runtime) configuration:
-
-  ```elixir
-  config :ex_aws, :dynamodb, decode_sets: true
-  ```
   """
   def decode(%{"BOOL" => true}), do: true
   def decode(%{"BOOL" => false}), do: false
@@ -40,22 +32,13 @@ defmodule ExAws.Dynamo.Decoder do
   def decode(%{"S" => value}), do: value
   def decode(%{"M" => value}), do: value |> decode
 
-  if Application.get_env(:ex_aws, :dynamodb, [])[:decode_sets] do
-    def decode(%{"BS" => values}), do: MapSet.new(values)
-    def decode(%{"SS" => values}), do: MapSet.new(values)
+  def decode(%{"BS" => values}), do: MapSet.new(values)
+  def decode(%{"SS" => values}), do: MapSet.new(values)
 
-    def decode(%{"NS" => values}) do
-      values
-      |> Stream.map(&binary_to_number/1)
-      |> Enum.into(MapSet.new())
-    end
-  else
-    def decode(%{"BS" => values}), do: values
-    def decode(%{"SS" => values}), do: values
-
-    def decode(%{"NS" => values}) do
-      Enum.map(values, &binary_to_number/1)
-    end
+  def decode(%{"NS" => values}) do
+    values
+    |> Stream.map(&binary_to_number/1)
+    |> Enum.into(MapSet.new())
   end
 
   def decode(%{"L" => values}) do

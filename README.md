@@ -8,18 +8,20 @@ Service module for https://github.com/ex-aws/ex_aws
 ## Installation
 
 The package can be installed by adding `ex_aws_dynamo` to your list of dependencies in `mix.exs`
-along with `:ex_aws` and your preferred JSON codec / http client
+along with `:ex_aws` and your preferred JSON codec and HTTP client:
 
 ```elixir
 def deps do
   [
-    {:ex_aws, "~> 2.0"},
-    {:ex_aws_dynamo, "~> 2.3"},
-    {:poison, "~> 3.0"},
-    {:hackney, "~> 1.9"},
+    {:ex_aws, "~> 2.1"},
+    {:ex_aws_dynamo, "~> 3.0"},
+    {:jason, "~> 1.0"},
+    {:hackney, "~> 1.9"}
   ]
 end
 ```
+
+`ex_aws` currently uses [Jason](https://github.com/michalmuskala/jason) as its default JSON codec - see (ex_aws)[https://github.com/ex-aws/ex_aws] for more information about setting a custom `:json_codec`.
 
 Documentation can be found at [https://hexdocs.pm/ex_aws_dynamo](https://hexdocs.pm/ex_aws_dynamo).
 
@@ -28,27 +30,6 @@ Documentation can be found at [https://hexdocs.pm/ex_aws_dynamo](https://hexdocs
 ### DynamoDB Local
 
 If you are running this module against a local development instance of DynamoDB, you'll want to make sure that you have installed at least version `1.11.477` (released 2019-02-06). You can find links to download the latest version [here](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBLocal.DownloadingAndRunning.html).
-
-## Configuration
-
-### `decode_sets`
-
-The default behavior of this application is to encode Elixir `MapSet` data to one of DynamoDB's three set types - number set, string set, or binary set; however, those DynamoDB datatypes will be decoded to Elixir `List`. If you wish to decode DynamoDB set types to Elixir `MapSet`, you can set the configuration for this application to include `decode_sets: true`.
-
-For example:
-
-```
-config :ex_aws, :dynamodb,
-  decode_sets: true
-```
-
-## Local testing
-
-This application supports three test commands:
-
-* `mix test` - run the normal test suite
-* `mix test.options` - run the test suite with options enabled (see `config/test_options.exs`)
-* `mix test.all` - run `mix test` and `mix test.options` sequentially
 
 ### Integration tests (optional)
 
@@ -73,6 +54,8 @@ config :ex_aws, :dynamodb,
 ```
 
 Before setting the `:port` and running tests, be aware that `test/lib/dynamo/integration_test.exs` will create and delete tables with the names `"TestUsers"`, `"Test.User"`, `"TestSeveralUsers"`, `"TestFoo"`, `"test_books"`, `"TestUsersWithRange"`, `"TestTransactions"`, `"TestTransactions2"` - test operations may affect your current tables if they share any of those names.
+
+If DynamoDB is not running locally or the config file has not been provided, the integration tests will be skipped.
 
 ## License
 

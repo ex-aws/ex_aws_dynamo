@@ -20,7 +20,7 @@ def deps do
 end
 ```
 
-`ex_aws` currently uses [Jason](https://github.com/michalmuskala/jason) as its default JSON codec - see (ex_aws)[https://github.com/ex-aws/ex_aws] for more information about setting a custom `:json_codec`.
+`ex_aws` currently uses [Jason](https://github.com/michalmuskala/jason) as its default JSON codec - see [ex_aws](https://github.com/ex-aws/ex_aws) for more information about setting a custom `:json_codec`.
 
 Documentation can be found at [https://hexdocs.pm/ex_aws_dynamo](https://hexdocs.pm/ex_aws_dynamo).
 

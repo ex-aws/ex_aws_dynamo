@@ -7,8 +7,7 @@ Service module for https://github.com/ex-aws/ex_aws
 
 ## Installation
 
-The package can be installed by adding `ex_aws_dynamo` to your list of dependencies in `mix.exs`
-along with your preferred JSON codec and HTTP client:
+The package can be installed by adding `ex_aws_dynamo` to your list of dependencies in `mix.exs` along with your preferred JSON codec and HTTP client:
 
 ```elixir
 def deps do
@@ -20,9 +19,9 @@ def deps do
 end
 ```
 
-`ex_aws` currently uses [Jason](https://github.com/michalmuskala/jason) as its default JSON codec - see [ex_aws](https://github.com/ex-aws/ex_aws) for more information about setting a custom `:json_codec`.
+**ExAws** uses [Jason](https://github.com/michalmuskala/jason) as its default JSON codec - if you intend to use a different codec, see [ex_aws](https://github.com/ex-aws/ex_aws) for more information about setting a custom `:json_codec`.
 
-Documentation can be found at [https://hexdocs.pm/ex_aws_dynamo](https://hexdocs.pm/ex_aws_dynamo).
+Documentation for **ExAwsDynamo** can be found at [https://hexdocs.pm/ex_aws_dynamo](https://hexdocs.pm/ex_aws_dynamo).
 
 ## Requirements
 
@@ -51,6 +50,8 @@ config :ex_aws, :dynamodb,
   port: SET_YOUR_PORT,
   region: "us-east-1"
 ```
+
+(or see `config/ddb_local_test.exs.example`)
 
 Before setting the `:port` and running tests, be aware that `test/lib/dynamo/integration_test.exs` will create and delete tables with the names `"TestUsers"`, `"Test.User"`, `"TestSeveralUsers"`, `"TestFoo"`, `"test_books"`, `"TestUsersWithRange"`, `"TestTransactions"`, `"TestTransactions2"` - test operations may affect your current tables if they share any of those names.
 

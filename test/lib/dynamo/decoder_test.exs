@@ -3,7 +3,21 @@ defmodule ExAws.Dynamo.DecoderTest do
   alias ExAws.Dynamo.Decoder
   alias ExAws.Dynamo.Encoder
 
-  test "decoder decodes numberset to a mapset of numbers" do
+  test "Decode boolean (boolean and string boolean)" do
+    assert Decoder.decode(%{"BOOL" => true}) == true
+    assert Decoder.decode(%{"BOOL" => "false"}) == false
+  end
+
+  test "Decode string" do
+    assert Decoder.decode(%{"S" => "foo"}) == "foo"
+  end
+
+  test "Decode map (different types)" do
+    assert %{"M" => %{"M" => %{foo: %{"S" => "bar"}, bar: %{"N" => 23}}}}
+           |> Decoder.decode() == %{foo: "bar", bar: 23}
+  end
+
+  test "Decode number set to a mapset of numbers" do
     assert %{"NS" => ["1", "2", "3"]}
            |> Decoder.decode() == MapSet.new([1, 2, 3])
 
@@ -11,42 +25,42 @@ defmodule ExAws.Dynamo.DecoderTest do
            |> Decoder.decode() == MapSet.new([1, 2, 3])
   end
 
-  test "decoder decodes stringset to a mapset of strings" do
+  test "Decode string set to a mapset of strings" do
     assert %{"SS" => ["foo", "bar", "baz"]}
            |> Decoder.decode() == MapSet.new(["foo", "bar", "baz"])
   end
 
-  test "decoder decodes binaryset to a mapset of strings" do
+  test "Decode binary set to a mapset of strings" do
     assert %{"BS" => ["U3Vubnk=", "UmFpbnk=", "U25vd3k="]}
            |> Decoder.decode() == MapSet.new(["U3Vubnk=", "UmFpbnk=", "U25vd3k="])
   end
 
-  test "lists of different types" do
+  test "Decode lists (different types)" do
     assert %{"L" => [%{"S" => "asdf"}, %{"N" => "1"}]}
            |> Decoder.decode() == ["asdf", 1]
   end
 
-  test "Decoder ints works" do
+  test "Decoder integers" do
     assert Decoder.decode(%{"N" => "23"}) == 23
     assert Decoder.decode(%{"N" => 23}) == 23
   end
 
-  test "Decoder floats works" do
+  test "Decode floats" do
     assert Decoder.decode(%{"N" => "23.1"}) == 23.1
     assert Decoder.decode(%{"N" => 23.1}) == 23.1
   end
 
-  test "Decoder nil works" do
+  test "Decode null" do
     assert Decoder.decode(%{"NULL" => "true"}) == nil
     assert Decoder.decode(%{"NULL" => true}) == nil
   end
 
-  test "Decoder structs works properly" do
+  test "Decode structs" do
     user = %Test.User{email: "foo@bar.com", name: "Bob", age: 23, admin: false}
     assert user == user |> Encoder.encode() |> Decoder.decode(as: Test.User)
   end
 
-  test "Decoder binary that are not strings works" do
+  test "Decode non-string binaries" do
     assert :zlib.unzip(
              Decoder.decode(%{
                "B" => "BcGBCQAgCATAVX6ZBvlKUogP1P3pbmi9bYlFwal9DTPEDCu0s8E06DWqM3TqAw=="

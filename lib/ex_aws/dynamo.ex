@@ -526,6 +526,7 @@ defmodule ExAws.Dynamo do
 
     data =
       opts
+      |> add_upcased_opt(opts, :return_consumed_capacity)
       |> camelize_keys
       |> Map.merge(%{"RequestItems" => request_items})
 
@@ -593,6 +594,8 @@ defmodule ExAws.Dynamo do
 
     data =
       opts
+      |> add_upcased_opt(opts, :return_item_collection_metrics)
+      |> add_upcased_opt(opts, :return_consumed_capacity)
       |> camelize_keys
       |> Map.merge(%{"RequestItems" => request_items})
 

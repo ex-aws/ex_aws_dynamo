@@ -1,4 +1,7 @@
 defmodule Test.User do
+  @moduledoc """
+  Simple mock model for use in testing.
+  """
   @derive ExAws.Dynamo.Encodable
   defstruct [:email, :name, :age, :admin]
 
@@ -12,6 +15,9 @@ defmodule Test.User do
 end
 
 defmodule Test.Nested do
+  @moduledoc """
+  Nested mock model for use in testing.
+  """
   @derive {ExAws.Dynamo.Encodable, only: [:items]}
   defstruct items: [], secret: nil
 end

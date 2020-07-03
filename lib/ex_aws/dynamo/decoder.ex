@@ -1,5 +1,5 @@
 defmodule ExAws.Dynamo.Decoder do
-  @doc """
+  @moduledoc """
   Decodes a dynamo response into a struct.
 
   If Dynamo.Decodable is implemented for the struct it will be called
@@ -48,7 +48,7 @@ defmodule ExAws.Dynamo.Decoder do
   def decode(%{"N" => value}) when is_binary(value), do: binary_to_number(value)
   def decode(%{"N" => value}) when value |> is_integer or value |> is_float, do: value
 
-  def decode(item = %{}) do
+  def decode(%{} = item) do
     item
     |> Enum.reduce(%{}, fn {k, v}, map ->
       Map.put(map, k, decode(v))

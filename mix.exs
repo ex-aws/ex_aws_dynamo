@@ -1,7 +1,7 @@
 defmodule ExAws.Dynamo.Mixfile do
   use Mix.Project
 
-  @version "3.0.2"
+  @version "3.0.3"
   @service "dynamo"
   @url "https://github.com/ex-aws/ex_aws_#{@service}"
   @name __MODULE__ |> Module.split() |> Enum.take(2) |> Enum.join(".")
@@ -54,7 +54,7 @@ defmodule ExAws.Dynamo.Mixfile do
   defp ex_aws() do
     case System.get_env("AWS") do
       "LOCAL" -> {:ex_aws, path: "../ex_aws"}
-      _ -> {:ex_aws, ">= 2.1.2"}
+      _ -> {:ex_aws, ">= 2.1.3"}
     end
   end
 end

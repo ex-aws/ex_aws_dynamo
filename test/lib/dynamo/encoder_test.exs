@@ -21,10 +21,21 @@ defmodule ExAws.Dynamo.EncoderTest do
     assert Encoder.encode(0.4) == %{"N" => "0.4"}
   end
 
-  test "Encoder removes empty strings from a map" do
+  test "Encoder conditionally allows or removes empty strings from a map" do
+    assert Encoder.encode(%{"data" => "value", "nodata" => ""}) == %{
+             "M" => %{
+               "data" => %{"S" => "value"},
+               "nodata" => %{"S" => ""}
+             }
+           }
+
+    Application.put_env(:ex_aws_dynamo, :ignore_empty_string_attributes, true)
+
     assert Encoder.encode(%{"data" => "value", "nodata" => ""}) == %{
              "M" => %{"data" => %{"S" => "value"}}
            }
+
+    Application.put_env(:ex_aws_dynamo, :ignore_empty_string_attributes, false)
   end
 
   test "Encoder can handle binaries that are not strings" do

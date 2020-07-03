@@ -769,22 +769,19 @@ defmodule ExAws.Dynamo do
           {:condition_expression, binary}
           | {:expression_attribute_names, expression_attribute_names_vals}
           | {:expression_attribute_values, expression_attribute_values_vals}
-          | {:return_values_on_condition_check_failure,
-             return_values_on_condition_check_failure_vals}
+          | {:return_values_on_condition_check_failure, return_values_on_condition_check_failure_vals}
         ]
 
   @type transact_update_item_opts :: [
           {:condition_expression, binary}
           | {:expression_attribute_names, expression_attribute_names_vals}
           | {:expression_attribute_values, expression_attribute_values_vals}
-          | {:return_values_on_condition_check_failure,
-             return_values_on_condition_check_failure_vals}
+          | {:return_values_on_condition_check_failure, return_values_on_condition_check_failure_vals}
           | {:update_expression, binary}
         ]
 
   @type transact_write_item ::
-          {:condition_check,
-           {table_name :: binary, key :: primary_key, transact_standard_item_opts}}
+          {:condition_check, {table_name :: binary, key :: primary_key, transact_standard_item_opts}}
           | {:delete, {table_name :: binary, key :: primary_key, transact_standard_item_opts}}
           | {:put, {table_name :: binary, item :: map(), transact_standard_item_opts}}
           | {:update, {table_name :: binary, key :: primary_key, transact_update_item_opts}}

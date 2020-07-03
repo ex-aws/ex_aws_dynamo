@@ -36,7 +36,8 @@ defmodule ExAws.Dynamo.Mixfile do
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
-      extra_applications: [:logger]
+      extra_applications: [:logger],
+      env: [ignore_empty_string_attributes: false]
     ]
   end
 
@@ -45,8 +46,8 @@ defmodule ExAws.Dynamo.Mixfile do
     [
       {:ex_doc, ">= 0.0.0", only: :dev},
       {:hackney, ">= 0.0.0", only: [:dev, :test]},
-      {:sweet_xml, ">= 0.0.0", only: [:dev, :test]},
       {:jason, ">= 0.0.0", only: [:dev, :test]},
+      {:sweet_xml, ">= 0.0.0", only: [:dev, :test]},
       ex_aws()
     ]
   end

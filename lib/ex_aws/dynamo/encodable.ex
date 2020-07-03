@@ -79,8 +79,10 @@ defimpl ExAws.Dynamo.Encodable, for: Map do
 
   def do_encode(map) do
     Enum.reduce(map, %{}, fn
-      {_, ""}, map ->
-        map
+      {k, ""}, map ->
+        if Application.get_env(:ex_aws_dynamo, :ignore_empty_string_attributes),
+          do: map,
+          else: Map.put(map, k, ExAws.Dynamo.Encodable.encode("", []))
 
       {k, v}, map when is_binary(k) ->
         Map.put(map, k, ExAws.Dynamo.Encodable.encode(v, []))

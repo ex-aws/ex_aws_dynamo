@@ -27,7 +27,22 @@ Documentation for **ExAwsDynamo** can be found at [https://hexdocs.pm/ex_aws_dyn
 
 ### DynamoDB Local
 
-If you are running this module against a local development instance of DynamoDB, you'll want to make sure that you have installed the latest version, `1.11.478` (released 2020-01-16). You can find links to download the latest version [here](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBLocal.DownloadingAndRunning.html).
+If you are running this module against a local development instance of DynamoDB, you'll want to make sure that you have installed the latest version, `1.13.1` (released 2020-05-29). You can find links to download the latest version [here](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBLocal.DownloadingAndRunning.html).
+
+## Configuration options
+
+Example configuration:
+
+```elixir
+config :ex_aws_dynamo,
+  ignore_empty_string_attributes: true
+```
+
+**:ignore_empty_string_attributes** :: boolean, *default:* `false`
+
+In May, 2020, DynamoDB was updated to allow storage of empty strings in non-key fields - [documentation](https://aws.amazon.com/about-aws/whats-new/2020/05/amazon-dynamodb-now-supports-empty-values-for-non-key-string-and-binary-attributes-in-dynamodb-tables/). In earlier versions of this app, fields with empty string attributes were stripped off prior to writing to the DB by `ExAws.Dynamo.Encodable.do_encode/1`; however, in light of these developments, the default behavior of this app will now be to write empty string values. In order to maintain backwards compatibility and to allow users to continue to ignore empty string attributes if they so choose, `:ignore_empty_string_attributes` may be set to `true`. Please note that this feature is only supported in DynamoDB local as of version `1.13.0` - if you are using an earlier local version, then we recommend setting this value to `true` or using an earlier release of this app.
+
+## Testing
 
 ### Integration tests (optional)
 

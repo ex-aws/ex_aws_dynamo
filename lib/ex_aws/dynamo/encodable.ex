@@ -78,20 +78,17 @@ defimpl ExAws.Dynamo.Encodable, for: Map do
   def do_encode(map, _), do: do_encode(map)
 
   def do_encode(map) do
-    Enum.reduce(map, %{}, fn
-      {k, ""}, map ->
-        if Application.get_env(:ex_aws_dynamo, :ignore_empty_string_attributes),
-          do: map,
-          else: Map.put(map, k, ExAws.Dynamo.Encodable.encode("", []))
-
-      {k, v}, map when is_binary(k) ->
-        Map.put(map, k, ExAws.Dynamo.Encodable.encode(v, []))
-
-      {k, v}, map ->
-        key = String.Chars.to_string(k)
-        Map.put(map, key, ExAws.Dynamo.Encodable.encode(v, []))
+    Enum.reduce(map, %{}, fn {k, v}, map ->
+      if v == "" and Application.get_env(:ex_aws_dynamo, :ignore_empty_string_attributes) do
+        map
+      else
+        Map.put(map, maybe_stringify_key(k), ExAws.Dynamo.Encodable.encode(v, []))
+      end
     end)
   end
+
+  defp maybe_stringify_key(k) when is_binary(k), do: k
+  defp maybe_stringify_key(k), do: String.Chars.to_string(k)
 end
 
 defimpl ExAws.Dynamo.Encodable, for: BitString do

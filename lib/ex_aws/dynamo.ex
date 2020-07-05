@@ -58,19 +58,6 @@ defmodule ExAws.Dynamo do
   Alternatively, if what's being encoded is a struct, you're always free to implement ExAws.Dynamo.Encodable for that struct.
 
   http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Operations.html
-
-  ## Configuration options
-
-  Example configuration:
-
-  ```elixir
-  config :ex_aws_dynamo,
-    ignore_empty_string_attributes: true
-  ```
-
-  `:ignore_empty_string_attributes` :: boolean, default: false
-
-  The default `false` setting will allow empty string/binary values to be written, which DynamoDB did not permit prior to May, 2020. Set this to `true` to mimic or support the legacy behavior, which would simply ignore writing those fields (they are decoded as `nil` on retrieval).
   """
 
   import ExAws.Utils, only: [camelize: 1, camelize_keys: 1, camelize_keys: 2, upcase: 1]

@@ -71,27 +71,6 @@ defmodule ExAws.DynamoIntegrationTest do
           |> Dynamo.decode_item(as: Test.User)
 
         assert user == item
-
-        Application.put_env(:ex_aws_dynamo, :ignore_empty_string_attributes, true)
-
-        user = %Test.User{
-          email: "foo@bar.com",
-          name: %{first: "bob", last: "bubba"},
-          age: "",
-          admin: false
-        }
-
-        assert {:ok, _} = Dynamo.put_item(Test.User, user) |> ExAws.request()
-
-        item =
-          Test.User
-          |> Dynamo.get_item(%{email: user.email})
-          |> ExAws.request!()
-          |> Dynamo.decode_item(as: Test.User)
-
-        assert user |> Map.put(:age, nil) == item
-
-        Application.put_env(:ex_aws_dynamo, :ignore_empty_string_attributes, false)
       end
 
       test "put and get several items with map values work" do

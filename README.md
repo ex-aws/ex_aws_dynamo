@@ -29,7 +29,9 @@ Documentation for **ExAwsDynamo** can be found at [https://hexdocs.pm/ex_aws_dyn
 
 If you are running this module against a local development instance of DynamoDB, you'll want to make sure that you have installed the latest version, `1.13.1` (released 2020-05-29). You can find links to download the latest version [here](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBLocal.DownloadingAndRunning.html).
 
-## Configuration options
+## Configuration
+
+### **ExAws.Dynamo**
 
 Example configuration:
 
@@ -40,7 +42,29 @@ config :ex_aws_dynamo,
 
 **:ignore_empty_string_attributes** :: boolean, *default:* `false`
 
-In May, 2020, DynamoDB was updated to allow storage of empty strings in non-key fields - [documentation](https://aws.amazon.com/about-aws/whats-new/2020/05/amazon-dynamodb-now-supports-empty-values-for-non-key-string-and-binary-attributes-in-dynamodb-tables/). In earlier versions of this app, fields with empty string attributes were stripped off prior to writing to the DB by `ExAws.Dynamo.Encodable.do_encode/1`; however, in light of these developments, the default behavior of this app will now be to write empty string values. In order to maintain backwards compatibility and to allow users to continue to ignore empty string attributes if they so choose, `:ignore_empty_string_attributes` may be set to `true`. Please note that this feature is only supported in DynamoDB local as of version `1.13.0` - if you are using an earlier local version, then we recommend setting this value to `true` or using an earlier release of this app.
+When set to `true`, fields with empty string attributes will not be written to the database. In May, 2020, DynamoDB was updated to allow storage of empty strings in non-key fields - [documentation](https://aws.amazon.com/about-aws/whats-new/2020/05/amazon-dynamodb-now-supports-empty-values-for-non-key-string-and-binary-attributes-in-dynamodb-tables/). In earlier versions of this app, fields with empty string attributes were stripped off prior to writing to the database by `ExAws.Dynamo.Encodable.do_encode/1`; however, in light of this change to DynamoDB, the default behavior of this app will now be to write empty string values. In order to maintain backwards compatibility and to allow users to continue to ignore empty string attributes if they so choose, `:ignore_empty_string_attributes` may be set to `true`. Please note that this feature is supported in DynamoDB local as of version `1.13.0` - if you are using an earlier local version, then we recommend setting this value to `true` or using an earlier release of this app.
+
+### **ExAws**
+
+In order to use **ExAws.Dynamo** against a production instance of DynamoDB, your app will need to provide the following configuration for `:ex_aws`:
+
+Example configuration:
+
+```elixir
+config :ex_aws,
+  access_key_id: [{:system, "AWS_ACCESS_KEY_ID"}, :instance_role],
+  secret_access_key: [{:system, "AWS_SECRET_ACCESS_KEY"}, :instance_role]
+```
+
+**:access_key_id** :: string
+
+The ID portion of a set of AWS credentials.
+
+**:secret_access_key** :: string
+
+The secret portion of a set of AWS credentials.
+
+Please see the [ExAws README](https://github.com/ex-aws/ex_aws) for additional reference.
 
 ## Testing
 

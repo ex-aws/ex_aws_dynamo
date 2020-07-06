@@ -12,7 +12,7 @@ The package can be installed by adding `ex_aws_dynamo` to your list of dependenc
 ```elixir
 def deps do
   [
-    {:ex_aws_dynamo, "~> 3.0"},
+    {:ex_aws_dynamo, "~> 4.0"},
     {:jason, "~> 1.0"},
     {:hackney, "~> 1.9"}
   ]

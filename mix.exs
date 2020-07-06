@@ -43,10 +43,11 @@ defmodule ExAws.Dynamo.Mixfile do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
+      {:credo, "~> 1.4", only: [:dev, :test], runtime: false},
       {:ex_doc, ">= 0.0.0", only: :dev},
       {:hackney, ">= 0.0.0", only: [:dev, :test]},
-      {:sweet_xml, ">= 0.0.0", only: [:dev, :test]},
       {:jason, ">= 0.0.0", only: [:dev, :test]},
+      {:sweet_xml, ">= 0.0.0", only: [:dev, :test]},
       ex_aws()
     ]
   end

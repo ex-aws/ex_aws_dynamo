@@ -27,7 +27,33 @@ Documentation for **ExAwsDynamo** can be found at [https://hexdocs.pm/ex_aws_dyn
 
 ### DynamoDB Local
 
-If you are running this module against a local development instance of DynamoDB, you'll want to make sure that you have installed the latest version, `1.11.478` (released 2020-01-16). You can find links to download the latest version [here](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBLocal.DownloadingAndRunning.html).
+If you are running this module against a local development instance of DynamoDB, you'll want to make sure that you have installed the latest version, `1.13.1` (released 2020-05-29). You can find links to download the latest version [here](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBLocal.DownloadingAndRunning.html).
+
+## Configuration
+
+### **ExAws**
+
+In order to use **ExAws.Dynamo** against a production instance of DynamoDB, your app will need to provide the following configuration for `:ex_aws`:
+
+Example configuration:
+
+```elixir
+config :ex_aws,
+  access_key_id: [{:system, "AWS_ACCESS_KEY_ID"}, :instance_role],
+  secret_access_key: [{:system, "AWS_SECRET_ACCESS_KEY"}, :instance_role]
+```
+
+**:access_key_id** :: string
+
+The ID portion of a set of AWS credentials.
+
+**:secret_access_key** :: string
+
+The secret portion of a set of AWS credentials.
+
+Please see the [ExAws README](https://github.com/ex-aws/ex_aws) for additional reference.
+
+## Testing
 
 ### Integration tests (optional)
 

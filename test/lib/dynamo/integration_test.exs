@@ -58,7 +58,7 @@ defmodule ExAws.DynamoIntegrationTest do
         user = %Test.User{
           email: "foo@bar.com",
           name: %{first: "bob", last: "bubba"},
-          age: 23,
+          age: "",
           admin: false
         }
 

@@ -21,9 +21,12 @@ defmodule ExAws.Dynamo.EncoderTest do
     assert Encoder.encode(0.4) == %{"N" => "0.4"}
   end
 
-  test "Encoder removes empty strings from a map" do
+  test "Encoder allows empty strings in a map" do
     assert Encoder.encode(%{"data" => "value", "nodata" => ""}) == %{
-             "M" => %{"data" => %{"S" => "value"}}
+             "M" => %{
+               "data" => %{"S" => "value"},
+               "nodata" => %{"S" => ""}
+             }
            }
   end
 

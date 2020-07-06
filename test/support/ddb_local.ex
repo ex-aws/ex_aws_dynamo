@@ -18,13 +18,13 @@ defmodule DDBLocal do
   def try_connect() do
     port = get_port()
 
-    if !is_nil(port) do
+    if is_nil(port) do
+      {:error, "No value provided for :port in config/ddb_local_test.exs."}
+    else
       case :gen_tcp.connect('localhost', port, []) do
         {:ok, _} -> :ok
         {:error, error} -> {:error, error}
       end
-    else
-      {:error, "No value provided for :port in config/ddb_local_test.exs."}
     end
   end
 

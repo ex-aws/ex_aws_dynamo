@@ -16,31 +16,32 @@ defmodule ExAws.Dynamo.Mixfile do
       deps: deps(),
       name: @name,
       package: package(),
-      docs: [main: @name, source_ref: "v#{@version}", source_url: @url]
+      docs: docs()
     ]
   end
 
   defp package do
     [
       description: "#{@name} service package",
-      files: ["lib", "config", "mix.exs", "README*"],
+      files: ["lib", "config", "mix.exs", "README*", "CHANGELOG*"],
       maintainers: ["Darren Klein", "Franko Franicevich", "Gilad Barkan", "Ben Wilson"],
       licenses: ["MIT"],
-      links: %{github: @url}
+      links: %{
+        Changelog: "https://hexdocs.pm/ex_aws_dynamo/changelog.html",
+        GitHub: @url
+      }
     ]
   end
 
   defp elixirc_paths(:test), do: ["lib", "test/support"]
   defp elixirc_paths(_), do: ["lib"]
 
-  # Run "mix help compile.app" to learn about applications.
   def application do
     [
       extra_applications: [:logger]
     ]
   end
 
-  # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
       {:credo, "~> 1.4", only: [:dev, :test], runtime: false},
@@ -57,5 +58,19 @@ defmodule ExAws.Dynamo.Mixfile do
       "LOCAL" -> {:ex_aws, path: "../ex_aws"}
       _ -> {:ex_aws, ">= 2.1.3"}
     end
+  end
+
+  defp docs do
+    [
+      extras: [
+        "CHANGELOG.md",
+        "README.md",
+        "UPGRADE.md"
+      ],
+      main: "readme",
+      source_url: @url,
+      source_ref: "v#{@version}",
+      formatters: ["html"]
+    ]
   end
 end

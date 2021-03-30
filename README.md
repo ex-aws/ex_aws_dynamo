@@ -1,13 +1,18 @@
-ExAws.Dynamo
-============
+# ExAws.Dynamo
+
 [![Hex.pm](https://img.shields.io/hexpm/v/ex_aws_dynamo.svg)](https://hex.pm/packages/ex_aws_dynamo)
 [![Build Docs](https://img.shields.io/badge/hexdocs-release-blue.svg)](https://hexdocs.pm/ex_aws_dynamo/ExAws.Dynamo.html)
+[![Module Version](https://img.shields.io/hexpm/v/ex_aws_dynamo.svg)](https://hex.pm/packages/ex_aws_dynamo)
+[![Hex Docs](https://img.shields.io/badge/hex-docs-lightgreen.svg)](https://hexdocs.pm/ex_aws_dynamo/)
+[![Total Download](https://img.shields.io/hexpm/dt/ex_aws_dynamo.svg)](https://hex.pm/packages/ex_aws_dynamo)
+[![License](https://img.shields.io/hexpm/l/ex_aws_dynamo.svg)](https://github.com/ex-aws/ex_aws_dynamo/blob/master/LICENSE)
+[![Last Updated](https://img.shields.io/github/last-commit/ex-aws/ex_aws_dynamo.svg)](https://github.com/ex-aws/ex_aws_dynamo/commits/master)
 
 Service module for https://github.com/ex-aws/ex_aws
 
 ## Installation
 
-The package can be installed by adding `ex_aws_dynamo` to your list of dependencies in `mix.exs` along with your preferred JSON codec and HTTP client:
+The package can be installed by adding `:ex_aws_dynamo` to your list of dependencies in `mix.exs` along with your preferred JSON codec and HTTP client:
 
 ```elixir
 def deps do
@@ -83,7 +88,7 @@ Before setting the `:port` and running tests, be aware that `test/lib/dynamo/int
 
 If DynamoDB is not running locally or the config file has not been provided, the integration tests will be skipped.
 
-## License
+## Copyright and License
 
 The MIT License (MIT)
 

@@ -1,8 +1,8 @@
 defmodule ExAws.Dynamo.Decoder do
   @moduledoc """
-  Decodes a dynamo response into a struct.
+  Decodes a Dynamo response into a struct.
 
-  If Dynamo.Decodable is implemented for the struct it will be called
+  If Dynamo.Decodable is implemented for the struct, it will be called
   after the completion of the coercion.
 
   This is important for handling nested maps if you wanted the nested maps

@@ -1,8 +1,8 @@
 defmodule ExAws.Dynamo do
   @moduledoc """
-  Operations on the AWS Dynamo service.
+  Operations on the AWS DynamoDB service.
 
-  NOTE: When Mix.env in [:test, :dev] dynamo clients will run by default against
+  NOTE: When Mix.env in [:test, :dev], Dynamo clients will run by default against
   DynamoDB local.
 
   ## Basic usage
@@ -33,31 +33,31 @@ defmodule ExAws.Dynamo do
 
   ## General notes
   All options are handled as underscored atoms instead of camelcased binaries as specified
-  in the Dynamo API. IE `IndexName` would be `:index_name`. Anywhere in the API that requires
-  dynamo type annotation (`{"S":"mystring"}`) is handled for you automatically. IE
+  in the Dynamo API, e.g. `IndexName` would be `:index_name`. Anywhere in the API that requires
+  Dynamo type annotation (`{"S":"mystring"}`) is handled for you automatically. For example,
 
   ```elixir
   ExAws.Dynamo.scan("Users", expression_attribute_values: [api_key: "foo"])
   ```
-  Transforms into a query of
+  transforms into a query of
   ```elixir
   %{"ExpressionAttributeValues" => %{api_key: %{"S" => "foo"}}, "TableName" => "Users"}
   ```
 
   Consult the function documentation to see precisely which options are handled this way.
 
-  If you wish to avoid this kind of automatic behaviour you are free to specify the types yourself.
-  IE:
+  If you wish to avoid this kind of automatic behaviour, you are free to specify the types yourself.
+  For example,
   ```elixir
   ExAws.Dynamo.scan("Users", expression_attribute_values: [api_key: %{"B" => "Treated as binary"}])
   ```
-  Becomes:
+  becomes
   ```elixir
   %{"ExpressionAttributeValues" => %{api_key: %{"B" => "Treated as binary"}}, "TableName" => "Users"}
   ```
   Alternatively, if what's being encoded is a struct, you're always free to implement ExAws.Dynamo.Encodable for that struct.
 
-  http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Operations.html
+  https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Operations.html
   """
 
   import ExAws.Utils, only: [camelize: 1, camelize_keys: 1, camelize_keys: 2, upcase: 1]
@@ -150,9 +150,11 @@ defmodule ExAws.Dynamo do
   @doc """
   Create table
 
-  `key_schema` can be a simple binary or atom indicating a simple hash key
+  `key_schema` can be a simple binary or atom indicating a simple hash key.
 
-  `billing_mode` may be either `:provisioned` (default) or `:pay_per_request`. If you are creating a `:pay-per-request` table, you will still need to provide values for read and write capacities, although they will be ignored - you may consider providing `nil` in those cases.
+  `billing_mode` may be either `:provisioned` (default) or `:pay_per_request`.
+  If you are creating a `:pay-per-request` table, you will still need to provide values for read and write capacities,
+  although they will be ignored - you may consider providing `nil` in those cases.
   """
   @spec create_table(
           table_name :: binary,
@@ -214,14 +216,16 @@ defmodule ExAws.Dynamo do
   @doc """
   Create table with secondary indices
 
-  Each index should follow the format outlined here: http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_CreateTable.html
+  Each index should follow the format outlined here: https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_CreateTable.html
 
-  For convenience, the keys in each index map are allowed to be atoms. IE:
+  For convenience, the keys in each index map are allowed to be atoms. e.g:
   `"KeySchema"` in the aws docs can be `key_schema:`
 
   Note that both the `global_indexes` and `local_indexes` arguments expect a list of such indices.
 
-  `billing_mode` may be either `:provisioned` (default) or `:pay_per_request`. If you are creating a `:pay-per-request` table, you will still need to provide values for read and write capacities, although they will be ignored - you may consider providing `nil` in those cases.
+  `billing_mode` may be either `:provisioned` (default) or `:pay_per_request`.
+  If you are creating a `:pay-per-request` table, you will still need to provide values for read and write capacities,
+  although they will be ignored - you may consider providing `nil` in those cases.
 
   Examples
   ```
@@ -402,7 +406,7 @@ defmodule ExAws.Dynamo do
   @doc """
   Scan table
 
-  Please read http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Scan.html
+  Please read https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Scan.html
 
   ```
   Dynamo.scan("Users"
@@ -412,11 +416,11 @@ defmodule ExAws.Dynamo do
     filter_expression: "#asdf = :desired_api_key")
   ```
 
-  Generally speaking you won't need to use `:expression_attribute_names`. It exists
-  to alias a column name if one of the columns you want to search against is a reserved dynamo word,
-  like `Percentile`. In this case it's totally unnecessary as `api_key` is not a reserved word.
+  Generally speaking, you won't need to use `:expression_attribute_names`. It exists
+  to alias a column name if one of the columns you want to search against is a reserved Dynamo word,
+  like `Percentile`. In this case, it's totally unnecessary as `api_key` is not a reserved word.
 
-  Parameters with keys that are automatically annotated with dynamo types are:
+  Parameters with keys that are automatically annotated with Dynamo types are:
   `[:exclusive_start_key, :expression_attribute_names]`
   """
   @type scan_opts :: [
@@ -446,7 +450,7 @@ defmodule ExAws.Dynamo do
   @doc """
   Query Table
 
-  Please read: http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Query.html
+  Please read https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Query.html
 
   ```
   Dynamo.query("Users",
@@ -484,10 +488,10 @@ defmodule ExAws.Dynamo do
   end
 
   @doc """
-  Get up to 100 items (16mb)
+  Batch-get up to 100 items (16 MB total max)
 
   Map of table names to request parameter maps.
-  http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_BatchGetItem.html
+  https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_BatchGetItem.html
 
   Parameters with keys that are automatically annotated with dynamo types are:
   `[:keys]`
@@ -510,7 +514,7 @@ defmodule ExAws.Dynamo do
     }
   })
   ```
-  As you see you're largely free to use either keyword args or maps in the body. A map
+  As you see, you're largely free to use either keyword args or maps in the body. A map
   is required for the argument itself because the table names are most often binaries, and I refuse
   to inflict proplists on anyone.
 
@@ -582,12 +586,12 @@ defmodule ExAws.Dynamo do
   end
 
   @doc """
-  Put or delete up to 25 items (16mb)
+  Put or delete up to 25 items (16 MB total max)
 
   Map of table names to request parameter maps.
-  http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_BatchWriteItem.html
+  https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_BatchWriteItem.html
 
-  Parameters with keys that are automatically annotated with dynamo types are:
+  Parameters with keys that are automatically annotated with Dynamo types are:
   `[:keys]`
   """
   @type write_item :: [
@@ -652,7 +656,7 @@ defmodule ExAws.Dynamo do
   Update item in table
 
   For update_args format see
-  http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateItem.html
+  https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateItem.html
   """
   @type update_item_opts :: [
           {:condition_expression, binary}
@@ -862,7 +866,7 @@ defmodule ExAws.Dynamo do
   defp build_expression_attribute_values(data, _), do: data
 
   ## Various other helpers
-  ################
+  #########################
 
   defp add_upcased_opt(data, opts, key) do
     case Map.fetch(opts, key) do

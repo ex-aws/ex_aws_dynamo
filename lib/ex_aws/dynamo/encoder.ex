@@ -1,6 +1,6 @@
 defmodule ExAws.Dynamo.Encoder do
   @moduledoc """
-  Takes an elixir value and converts it into a dynamo style map.
+  Takes an Elixir value and converts it into a Dynamo-style map.
 
   ```elixir
   MapSet.new [1,2,3] |> #{__MODULE__}.encode
@@ -33,8 +33,8 @@ defmodule ExAws.Dynamo.Encoder do
     ExAws.Dynamo.Encodable.encode(value, options)
   end
 
-  # Use this in case you want to encode something already in dynamo format
-  # For some reason I cannot fathom. If you find yourself using this, please open an issue
+  # Use this in case you want to encode something already in Dynamo format
+  # for some reason I cannot fathom. If you find yourself using this, please open an issue
   # so I can find out why and better support this.
   def encode!(value, options \\ []) do
     ExAws.Dynamo.Encodable.encode(value, options)

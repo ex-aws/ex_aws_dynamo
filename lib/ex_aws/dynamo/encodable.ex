@@ -1,7 +1,7 @@
 defprotocol ExAws.Dynamo.Encodable do
   @type t :: any
 
-  @doc "Converts an elixir value into a map tagging the value with its dynamodb type"
+  @doc "Converts an Elixir value into a map tagging the value with its Dynamo type"
   def encode(value, options)
 end
 
@@ -104,7 +104,7 @@ defimpl ExAws.Dynamo.Encodable, for: List do
   def encode([], _), do: %{"L" => []}
 
   @doc """
-  Dynamodb offers typed sets and L, a generic list of typed attributes.
+  DynamoDB offers typed sets and L, a generic list of typed attributes.
   """
   def encode(list, _) do
     typed_values =

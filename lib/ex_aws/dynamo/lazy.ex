@@ -1,7 +1,7 @@
 defmodule ExAws.Dynamo.Lazy do
   @moduledoc false
 
-  ## Implimentation of the lazy functions surfaced by ExAws.Dynamo.Client
+  ## Implementation of the lazy functions surfaced by ExAws.Dynamo.Client
 
   @doc "Generates a scan stream"
   def stream_scan(table, opts, config) do

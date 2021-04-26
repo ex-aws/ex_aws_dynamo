@@ -32,7 +32,7 @@ Documentation for **ExAwsDynamo** can be found at [https://hexdocs.pm/ex_aws_dyn
 
 ### DynamoDB Local
 
-If you are running this module against a local development instance of DynamoDB, you'll want to make sure that you have installed the latest version, `1.13.1` (released 2020-05-29). You can find links to download the latest version [here](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBLocal.DownloadingAndRunning.html).
+If you are running this module against a local development instance of DynamoDB, you'll want to make sure that you have installed the latest version, `1.15.0` (released 2021-02-08). You can find links to download the latest version [here](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBLocal.DownloadingAndRunning.html).
 
 ## Configuration
 
@@ -84,7 +84,7 @@ config :ex_aws, :dynamodb,
 
 (or see `config/ddb_local_test.exs.example`)
 
-Before setting the `:port` and running tests, be aware that `test/lib/dynamo/integration_test.exs` will create and delete tables with the names `"TestUsers"`, `"Test.User"`, `"TestSeveralUsers"`, `"TestFoo"`, `"test_books"`, `"TestUsersWithRange"`, `"TestTransactions"`, `"TestTransactions2"` - test operations may affect your current tables if they share any of those names.
+Before running tests, be aware that `test/lib/dynamo/integration_test.exs` will create and delete tables with the names `"TestUsers"`, `"Test.User"`, `"TestSeveralUsers"`, `"TestFoo"`, `"test_books"`, `"TestUsersWithRange"`, `"TestTransactions"`, `"TestTransactions2"` - test operations may affect your current tables if they share any of those names. You may consider maintaining a separate instance of DynamoDB local (or at least a separate instance of its `shared-local-instance.db` file) for testing.
 
 If DynamoDB is not running locally or the config file has not been provided, the integration tests will be skipped.
 

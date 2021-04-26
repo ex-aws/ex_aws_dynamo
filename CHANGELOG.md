@@ -1,5 +1,10 @@
 # Changelog
 
+## v4.0.1 - 2021-04-26
+
+- Update dependencies
+- Update documentation
+
 ## v4.0.0 - 2020-07-06
 
 - Add support for empty string/binary attributes

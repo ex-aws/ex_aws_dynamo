@@ -3,7 +3,7 @@ defmodule ExAws.DynamoTest do
   alias ExAws.Dynamo
 
   ## NOTE:
-  # These tests are not intended to be operational examples, but intead mere
+  # These tests are not intended to be operational examples, but instead mere
   # ensure that the form of the data to be sent to AWS is correct.
   #
 

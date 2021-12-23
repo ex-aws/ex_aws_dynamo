@@ -424,7 +424,8 @@ defmodule ExAws.Dynamo do
   `[:exclusive_start_key, :expression_attribute_names]`
   """
   @type scan_opts :: [
-          {:exclusive_start_key, exclusive_start_key_vals}
+          {:consistent_read, boolean}
+          | {:exclusive_start_key, exclusive_start_key_vals}
           | {:expression_attribute_names, expression_attribute_names_vals}
           | {:expression_attribute_values, expression_attribute_values_vals}
           | {:filter_expression, binary}

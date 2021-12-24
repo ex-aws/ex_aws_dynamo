@@ -62,6 +62,7 @@ defmodule ExAws.Dynamo do
 
   import ExAws.Utils, only: [camelize: 1, camelize_keys: 1, camelize_keys: 2, upcase: 1]
   alias __MODULE__
+  alias ExAws.Dynamo.{Decoder, Lazy}
 
   @nested_opts [:exclusive_start_key, :expression_attribute_values, :expression_attribute_names]
   @upcase_opts [:return_values, :return_item_collection_metrics, :select, :total_segments]
@@ -125,8 +126,8 @@ defmodule ExAws.Dynamo do
   |> Dynamo.decode_item(as: User)
   ```
   """
-  @spec decode_item(Map.t()) :: Map.t()
-  @spec decode_item(Map.t(), as: atom) :: Map.t()
+  @spec decode_item(map()) :: map()
+  @spec decode_item(map(), as: atom) :: map()
   def decode_item(item, opts \\ [])
 
   def decode_item(%{"Items" => items}, opts) do
@@ -138,12 +139,12 @@ defmodule ExAws.Dynamo do
   end
 
   def decode_item(item, opts) do
-    ExAws.Dynamo.Decoder.decode(item, opts)
+    Decoder.decode(item, opts)
   end
 
   @doc "List tables"
   @spec list_tables() :: ExAws.Operation.JSON.t()
-  def list_tables() do
+  def list_tables do
     request(:list_tables, %{})
   end
 
@@ -252,8 +253,8 @@ defmodule ExAws.Dynamo do
           key_definitions :: key_definitions,
           read_capacity :: pos_integer,
           write_capacity :: pos_integer,
-          global_indexes :: [Map.t()],
-          local_indexes :: [Map.t()],
+          global_indexes :: [map()],
+          local_indexes :: [map()],
           billing_mode :: dynamo_billing_types
         ) :: ExAws.ExAws.Operation.JSON.t()
   def create_table(
@@ -303,7 +304,7 @@ defmodule ExAws.Dynamo do
           read_capacity :: pos_integer,
           write_capacity :: pos_integer,
           billing_mode :: dynamo_billing_types
-        ) :: Map.t()
+        ) :: map()
   defp build_billing_mode(read_capacity, write_capacity, :provisioned) do
     %{
       "BillingMode" => "PROVISIONED",
@@ -326,7 +327,7 @@ defmodule ExAws.Dynamo do
   end
 
   @doc "Update Table"
-  @spec update_table(name :: binary, attributes :: Keyword.t() | Map.t()) ::
+  @spec update_table(name :: binary, attributes :: Keyword.t() | map()) ::
           ExAws.Operation.JSON.t()
   def update_table(name, attributes) do
     data =
@@ -338,7 +339,7 @@ defmodule ExAws.Dynamo do
     request(:update_table, data)
   end
 
-  @spec maybe_convert_billing_mode(attributes :: Keyword.t() | Map.t()) :: Keyword.t() | Map.t()
+  @spec maybe_convert_billing_mode(attributes :: Keyword.t() | map()) :: Keyword.t() | map()
   defp maybe_convert_billing_mode(attributes) do
     case attributes[:billing_mode] do
       nil -> attributes
@@ -346,16 +347,16 @@ defmodule ExAws.Dynamo do
     end
   end
 
-  @spec convert_billing_mode(attributes :: Keyword.t() | Map.t(), dynamo_billing_types) ::
-          Keyword.t() | Map.t()
+  @spec convert_billing_mode(attributes :: Keyword.t() | map(), dynamo_billing_types) ::
+          Keyword.t() | map()
   defp convert_billing_mode(attributes, :provisioned),
     do: do_convert_billing_mode(attributes, "PROVISIONED")
 
   defp convert_billing_mode(attributes, :pay_per_request),
     do: do_convert_billing_mode(attributes, "PAY_PER_REQUEST")
 
-  @spec do_convert_billing_mode(attributes :: Keyword.t() | Map.t(), value :: String.t()) ::
-          Keyword.t() | Map.t()
+  @spec do_convert_billing_mode(attributes :: Keyword.t() | map(), value :: String.t()) ::
+          Keyword.t() | map()
   defp do_convert_billing_mode(attributes, value) when is_map(attributes),
     do: Map.replace!(attributes, :billing_mode, value)
 
@@ -377,7 +378,7 @@ defmodule ExAws.Dynamo do
     request(:update_time_to_live, data)
   end
 
-  @spec build_time_to_live(ttl_attribute :: binary, enabled :: boolean) :: Map.t()
+  @spec build_time_to_live(ttl_attribute :: binary, enabled :: boolean) :: map()
   defp build_time_to_live("", _enabled) do
     %{}
   end
@@ -445,7 +446,7 @@ defmodule ExAws.Dynamo do
       |> build_opts()
       |> Map.merge(%{"TableName" => name})
 
-    request(:scan, data, %{stream_builder: &ExAws.Dynamo.Lazy.stream_scan(name, opts, &1)})
+    request(:scan, data, %{stream_builder: &Lazy.stream_scan(name, opts, &1)})
   end
 
   @doc """
@@ -485,7 +486,7 @@ defmodule ExAws.Dynamo do
       |> build_opts()
       |> Map.merge(%{"TableName" => name})
 
-    request(:query, data, %{stream_builder: &ExAws.Dynamo.Lazy.stream_query(name, opts, &1)})
+    request(:query, data, %{stream_builder: &Lazy.stream_query(name, opts, &1)})
   end
 
   @doc """

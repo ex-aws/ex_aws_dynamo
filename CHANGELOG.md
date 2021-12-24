@@ -1,5 +1,13 @@
 # Changelog
 
+## v4.0.2 - 2021-12-24
+
+- Add :consistent_read option in scan_opts spec
+- Add `code_quality` alias
+- Adds dialyxir to dev dependencies
+- Various credo and dialyzer fixes
+- Fixes typos in documentation and README
+
 ## v4.0.1 - 2021-04-26
 
 - Update dependencies

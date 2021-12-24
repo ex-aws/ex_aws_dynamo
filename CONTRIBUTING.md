@@ -6,8 +6,13 @@ Contributions to ExAws.Dynamo are always welcome! For contributions to this part
 Before submitting any PR, please make sure that the code is adequately tested, formatted, and checked for other issues... in other words, please run
 
 ```bash
-mix format
-mix credo
+# a convenient alias for runnin `mix format`, `mix credo --strict`, and `mix dialyzer`
+mix code_quality
+```
+
+and
+
+```bash
 mix test
 ```
 

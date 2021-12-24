@@ -15,7 +15,7 @@ defmodule DDBLocal do
     :ok
   end
 
-  def try_connect() do
+  def try_connect do
     port = get_port()
 
     if is_nil(port) do
@@ -28,5 +28,5 @@ defmodule DDBLocal do
     end
   end
 
-  def get_port(), do: Application.get_env(:ex_aws, :dynamodb, [])[:port]
+  def get_port, do: Application.get_env(:ex_aws, :dynamodb, [])[:port]
 end

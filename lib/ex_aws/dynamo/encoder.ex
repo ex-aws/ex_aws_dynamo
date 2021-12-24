@@ -16,6 +16,8 @@ defmodule ExAws.Dynamo.Encoder do
   This is handled via the ExAws.Dynamo.Encodable protocol.
   """
 
+  alias ExAws.Dynamo.Encodable
+
   # These functions exist to ensure that encoding is idempotent.
   def encode(value), do: encode(value, [])
   def encode(%{"B" => _} = val, _), do: val
@@ -29,19 +31,17 @@ defmodule ExAws.Dynamo.Encoder do
   def encode(%{"S" => _} = val, _), do: val
   def encode(%{"SS" => _} = val, _), do: val
 
-  def encode(value, options) do
-    ExAws.Dynamo.Encodable.encode(value, options)
-  end
+  def encode(value, options), do: Encodable.encode(value, options)
 
   # Use this in case you want to encode something already in Dynamo format
   # for some reason I cannot fathom. If you find yourself using this, please open an issue
   # so I can find out why and better support this.
   def encode!(value, options \\ []) do
-    ExAws.Dynamo.Encodable.encode(value, options)
+    Encodable.encode(value, options)
   end
 
   def encode_root(value, options \\ []) do
-    case ExAws.Dynamo.Encodable.encode(value, options) do
+    case Encodable.encode(value, options) do
       %{"M" => value} -> value
       %{"L" => value} -> value
     end

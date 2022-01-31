@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        otp: ['23.3.4.10', '24.2']
+        otp: ['23.3.4.11']
         elixir: ['1.9.4', '1.13.2']
     steps:
       - uses: actions/checkout@v2
@@ -18,6 +18,6 @@ jobs:
       - uses: rrainn/dynamodb-action@v2.0.0
       - run: mix deps.get
       - run: mix compile
-      - run: mix format --check-formatted
-      - run: mix dialyzer
+      - run: mix format --check-formatted && mix dialyzer
+        if: matrix.elixir == '1.13.2'
       - run: mix test

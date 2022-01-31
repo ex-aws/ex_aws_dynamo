@@ -46,12 +46,11 @@ defmodule ExAws.Dynamo.Mixfile do
   defp deps do
     [
       {:credo, "~> 1.4", only: [:dev, :test], runtime: false},
-      {:dialyxir, "~> 1.0", only: [:dev], runtime: false},
+      {:dialyxir, "~> 1.0", only: [:dev, :test], runtime: false},
       {:ex_doc, ">= 0.0.0", only: :dev},
       {:hackney, ">= 0.0.0", only: [:dev, :test]},
       {:jason, ">= 0.0.0", only: [:dev, :test]},
       {:sweet_xml, ">= 0.0.0", only: [:dev, :test]},
-      {:dialyxir, "~> 1.0", only: [:dev, :test], runtime: false},
       ex_aws()
     ]
   end

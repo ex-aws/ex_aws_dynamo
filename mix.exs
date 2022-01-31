@@ -10,7 +10,7 @@ defmodule ExAws.Dynamo.Mixfile do
     [
       app: :ex_aws_dynamo,
       version: @version,
-      elixir: "~> 1.5",
+      elixir: "~> 1.9",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       deps: deps(),

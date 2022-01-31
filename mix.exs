@@ -1,7 +1,7 @@
 defmodule ExAws.Dynamo.Mixfile do
   use Mix.Project
 
-  @version "4.0.1"
+  @version "4.0.2"
   @service "dynamo"
   @url "https://github.com/ex-aws/ex_aws_#{@service}"
   @name __MODULE__ |> Module.split() |> Enum.take(2) |> Enum.join(".")
@@ -16,7 +16,8 @@ defmodule ExAws.Dynamo.Mixfile do
       deps: deps(),
       name: @name,
       package: package(),
-      docs: docs()
+      docs: docs(),
+      aliases: aliases()
     ]
   end
 
@@ -24,7 +25,7 @@ defmodule ExAws.Dynamo.Mixfile do
     [
       description: "#{@name} service package",
       files: ["lib", "config", "mix.exs", "README*", "CHANGELOG*"],
-      maintainers: ["Darren Klein", "Franko Franicevich", "Gilad Barkan", "Ben Wilson"],
+      maintainers: ["Darren Klein", "Ben Wilson"],
       licenses: ["MIT"],
       links: %{
         Changelog: "https://hexdocs.pm/ex_aws_dynamo/changelog.html",
@@ -45,6 +46,7 @@ defmodule ExAws.Dynamo.Mixfile do
   defp deps do
     [
       {:credo, "~> 1.4", only: [:dev, :test], runtime: false},
+      {:dialyxir, "~> 1.0", only: [:dev], runtime: false},
       {:ex_doc, ">= 0.0.0", only: :dev},
       {:hackney, ">= 0.0.0", only: [:dev, :test]},
       {:jason, ">= 0.0.0", only: [:dev, :test]},
@@ -72,6 +74,12 @@ defmodule ExAws.Dynamo.Mixfile do
       source_url: @url,
       source_ref: "v#{@version}",
       formatters: ["html"]
+    ]
+  end
+
+  defp aliases do
+    [
+      code_quality: ["format", "credo --strict", "dialyzer"]
     ]
   end
 end

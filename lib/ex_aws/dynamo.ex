@@ -62,6 +62,8 @@ defmodule ExAws.Dynamo do
 
   import ExAws.Utils, only: [camelize: 1, camelize_keys: 1, camelize_keys: 2, upcase: 1]
   alias __MODULE__
+  alias ExAws.Dynamo.{Decoder, Lazy}
+  alias ExAws.Operation.JSON
 
   @nested_opts [:exclusive_start_key, :expression_attribute_values, :expression_attribute_names]
   @upcase_opts [:return_values, :return_item_collection_metrics, :select, :total_segments]
@@ -138,12 +140,12 @@ defmodule ExAws.Dynamo do
   end
 
   def decode_item(item, opts) do
-    ExAws.Dynamo.Decoder.decode(item, opts)
+    Decoder.decode(item, opts)
   end
 
   @doc "List tables"
-  @spec list_tables() :: ExAws.Operation.JSON.t()
-  def list_tables() do
+  @spec list_tables() :: JSON.t()
+  def list_tables do
     request(:list_tables, %{})
   end
 
@@ -163,7 +165,7 @@ defmodule ExAws.Dynamo do
           read_capacity :: pos_integer,
           write_capacity :: pos_integer,
           billing_mode :: dynamo_billing_types
-        ) :: ExAws.Operation.JSON.t()
+        ) :: JSON.t()
   def create_table(
         name,
         primary_key,
@@ -255,7 +257,7 @@ defmodule ExAws.Dynamo do
           global_indexes :: [map()],
           local_indexes :: [map()],
           billing_mode :: dynamo_billing_types
-        ) :: ExAws.Operation.JSON.t()
+        ) :: JSON.t()
   def create_table(
         name,
         key_schema,
@@ -320,14 +322,14 @@ defmodule ExAws.Dynamo do
   end
 
   @doc "Describe table"
-  @spec describe_table(name :: binary) :: ExAws.Operation.JSON.t()
+  @spec describe_table(name :: binary) :: JSON.t()
   def describe_table(name) do
     request(:describe_table, %{"TableName" => name})
   end
 
   @doc "Update Table"
   @spec update_table(name :: binary, attributes :: Keyword.t() | map()) ::
-          ExAws.Operation.JSON.t()
+          JSON.t()
   def update_table(name, attributes) do
     data =
       attributes
@@ -363,14 +365,14 @@ defmodule ExAws.Dynamo do
     do: Keyword.replace!(attributes, :billing_mode, value)
 
   @doc "Delete Table"
-  @spec delete_table(table :: binary) :: ExAws.Operation.JSON.t()
+  @spec delete_table(table :: binary) :: JSON.t()
   def delete_table(table) do
     request(:delete_table, %{"TableName" => table})
   end
 
   @doc "Update time to live"
   @spec update_time_to_live(table :: binary, ttl_attribute :: binary, enabled :: boolean) ::
-          ExAws.Operation.JSON.t()
+          JSON.t()
   def update_time_to_live(table, ttl_attribute, enabled) do
     data = build_time_to_live(ttl_attribute, enabled) |> Map.merge(%{"TableName" => table})
 
@@ -396,7 +398,7 @@ defmodule ExAws.Dynamo do
   end
 
   @doc "Describe time to live"
-  @spec describe_time_to_live(table :: binary) :: ExAws.Operation.JSON.t()
+  @spec describe_time_to_live(table :: binary) :: JSON.t()
   def describe_time_to_live(table) do
     request(:describe_time_to_live, %{"TableName" => table})
   end
@@ -424,7 +426,8 @@ defmodule ExAws.Dynamo do
   `[:exclusive_start_key, :expression_attribute_names]`
   """
   @type scan_opts :: [
-          {:exclusive_start_key, exclusive_start_key_vals}
+          {:consistent_read, boolean}
+          | {:exclusive_start_key, exclusive_start_key_vals}
           | {:expression_attribute_names, expression_attribute_names_vals}
           | {:expression_attribute_values, expression_attribute_values_vals}
           | {:filter_expression, binary}
@@ -436,15 +439,15 @@ defmodule ExAws.Dynamo do
           | {:select, select_vals}
           | {:total_segments, pos_integer}
         ]
-  @spec scan(table_name :: table_name) :: ExAws.Operation.JSON.t()
-  @spec scan(table_name :: table_name, opts :: scan_opts) :: ExAws.Operation.JSON.t()
+  @spec scan(table_name :: table_name) :: JSON.t()
+  @spec scan(table_name :: table_name, opts :: scan_opts) :: JSON.t()
   def scan(name, opts \\ []) do
     data =
       opts
       |> build_opts()
       |> Map.merge(%{"TableName" => name})
 
-    request(:scan, data, %{stream_builder: &ExAws.Dynamo.Lazy.stream_scan(name, opts, &1)})
+    request(:scan, data, %{stream_builder: &Lazy.stream_scan(name, opts, &1)})
   end
 
   @doc """
@@ -476,15 +479,15 @@ defmodule ExAws.Dynamo do
           | {:scan_index_forward, boolean}
           | {:select, select_vals}
         ]
-  @spec query(table_name :: table_name) :: ExAws.Operation.JSON.t()
-  @spec query(table_name :: table_name, opts :: query_opts) :: ExAws.Operation.JSON.t()
+  @spec query(table_name :: table_name) :: JSON.t()
+  @spec query(table_name :: table_name, opts :: query_opts) :: JSON.t()
   def query(name, opts \\ []) do
     data =
       opts
       |> build_opts()
       |> Map.merge(%{"TableName" => name})
 
-    request(:query, data, %{stream_builder: &ExAws.Dynamo.Lazy.stream_query(name, opts, &1)})
+    request(:query, data, %{stream_builder: &Lazy.stream_query(name, opts, &1)})
   end
 
   @doc """
@@ -528,9 +531,9 @@ defmodule ExAws.Dynamo do
           | {:expression_attribute_names, expression_attribute_names_vals}
           | {:projection_expression, binary}
         ]
-  @spec batch_get_item(%{table_name => get_item}) :: ExAws.Operation.JSON.t()
+  @spec batch_get_item(%{table_name => get_item}) :: JSON.t()
   @spec batch_get_item(%{table_name => get_item}, opts :: batch_get_item_opts) ::
-          ExAws.Operation.JSON.t()
+          JSON.t()
   def batch_get_item(data, opts \\ []) do
     request_items =
       data
@@ -570,9 +573,9 @@ defmodule ExAws.Dynamo do
           | {:return_item_collection_metrics, return_item_collection_metrics_vals}
           | {:return_values, return_values_vals}
         ]
-  @spec put_item(table_name :: table_name, record :: map()) :: ExAws.Operation.JSON.t()
+  @spec put_item(table_name :: table_name, record :: map()) :: JSON.t()
   @spec put_item(table_name :: table_name, record :: map(), opts :: put_item_opts) ::
-          ExAws.Operation.JSON.t()
+          JSON.t()
   def put_item(name, record, opts \\ []) do
     data =
       opts
@@ -602,9 +605,9 @@ defmodule ExAws.Dynamo do
           {:return_consumed_capacity, return_consumed_capacity_vals}
           | {:return_item_collection_metrics, return_item_collection_metrics_vals}
         ]
-  @spec batch_write_item(%{table_name => [write_item]}) :: ExAws.Operation.JSON.t()
+  @spec batch_write_item(%{table_name => [write_item]}) :: JSON.t()
   @spec batch_write_item(%{table_name => [write_item]}, opts :: batch_write_item_opts) ::
-          ExAws.Operation.JSON.t()
+          JSON.t()
   def batch_write_item(data, opts \\ []) do
     request_items =
       data
@@ -637,9 +640,9 @@ defmodule ExAws.Dynamo do
           | {:projection_expression, binary}
           | {:return_consumed_capacity, return_consumed_capacity_vals}
         ]
-  @spec get_item(table_name :: table_name, primary_key :: primary_key) :: ExAws.Operation.JSON.t()
+  @spec get_item(table_name :: table_name, primary_key :: primary_key) :: JSON.t()
   @spec get_item(table_name :: table_name, primary_key :: primary_key, opts :: get_item_opts) ::
-          ExAws.Operation.JSON.t()
+          JSON.t()
   def get_item(name, primary_key, opts \\ []) do
     data =
       opts
@@ -671,7 +674,7 @@ defmodule ExAws.Dynamo do
           table_name :: table_name,
           primary_key :: primary_key,
           opts :: update_item_opts
-        ) :: ExAws.Operation.JSON.t()
+        ) :: JSON.t()
   def update_item(table_name, primary_key, update_opts) do
     data =
       update_opts
@@ -694,12 +697,12 @@ defmodule ExAws.Dynamo do
           | {:return_values, return_values_vals}
         ]
   @spec delete_item(table_name :: table_name, primary_key :: primary_key) ::
-          ExAws.Operation.JSON.t()
+          JSON.t()
   @spec delete_item(
           table_name :: table_name,
           primary_key :: primary_key,
           opts :: delete_item_opts
-        ) :: ExAws.Operation.JSON.t()
+        ) :: JSON.t()
   def delete_item(name, primary_key, opts \\ []) do
     data =
       opts
@@ -726,8 +729,8 @@ defmodule ExAws.Dynamo do
         ]
 
   @spec transact_get_items(items :: [transact_get_item], transact_get_items_opts) ::
-          ExAws.Operation.JSON.t()
-  @spec transact_get_items(items :: [transact_get_item]) :: ExAws.Operation.JSON.t()
+          JSON.t()
+  @spec transact_get_items(items :: [transact_get_item]) :: JSON.t()
 
   @doc """
   A synchronous operation that retrieves multiple items from one or more tables (but not from indexes) in a single account and region
@@ -800,8 +803,8 @@ defmodule ExAws.Dynamo do
   A synchronous write operation that groups up to 25 action requests
   """
   @spec transact_write_items(items :: [transact_write_item], transact_write_items_opts) ::
-          ExAws.Operation.JSON.t()
-  @spec transact_write_items(items :: [transact_write_item]) :: ExAws.Operation.JSON.t()
+          JSON.t()
+  @spec transact_write_items(items :: [transact_write_item]) :: JSON.t()
   def transact_write_items(items, opts \\ []) do
     data =
       opts
@@ -895,7 +898,7 @@ defmodule ExAws.Dynamo do
       |> Atom.to_string()
       |> Macro.camelize()
 
-    ExAws.Operation.JSON.new(
+    JSON.new(
       :dynamodb,
       %{
         data: data,

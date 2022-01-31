@@ -8,11 +8,14 @@ defmodule ExAws.Dynamo.Decoder do
   This is important for handling nested maps if you wanted the nested maps
   to have atom keys.
   """
+
+  alias ExAws.Dynamo.Decodable
+
   def decode(item, as: struct_module) do
     item
     |> decode
     |> binary_map_to_struct(struct_module)
-    |> ExAws.Dynamo.Decodable.decode()
+    |> Decodable.decode()
   end
 
   @doc """
@@ -57,11 +60,9 @@ defmodule ExAws.Dynamo.Decoder do
 
   @doc "Attempts to convert a number to a float, and then an integer"
   def binary_to_number(binary) when is_binary(binary) do
-    try do
-      String.to_float(binary)
-    rescue
-      ArgumentError -> String.to_integer(binary)
-    end
+    String.to_float(binary)
+  rescue
+    ArgumentError -> String.to_integer(binary)
   end
 
   def binary_to_number(binary), do: binary

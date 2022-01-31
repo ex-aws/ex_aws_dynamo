@@ -31,7 +31,7 @@ Documentation for **ExAwsDynamo** can be found at [https://hexdocs.pm/ex_aws_dyn
 
 ### DynamoDB Local
 
-If you are running this module against a local development instance of DynamoDB, you'll want to make sure that you have installed the latest version, `1.15.0` (released 2021-02-08). You can find links to download the latest version [here](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBLocal.DownloadingAndRunning.html).
+If you are running this module against a local development instance of DynamoDB, you'll want to make sure that you have installed the latest version, `1.17.2` (released 2021-12-16). You can find links to download the latest version [here](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBLocal.DownloadingAndRunning.html).
 
 ## Configuration
 

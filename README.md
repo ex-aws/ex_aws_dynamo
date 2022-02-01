@@ -66,7 +66,7 @@ The tests in `test/lib/dynamo/integration_test.exs` will attempt to run against 
 `config/ddb_local_test.exs`
 
 ```elixir
-use Mix.Config
+import Config
 
 config :ex_aws,
   debug_requests: false, # set to true to monitor the DDB requests

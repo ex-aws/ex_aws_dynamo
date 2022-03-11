@@ -69,6 +69,8 @@ defmodule ExAws.Dynamo do
   @upcase_opts [:return_values, :return_item_collection_metrics, :select, :total_segments]
   @special_opts @nested_opts ++ @upcase_opts
   @default_billing_mode :provisioned
+  @default_read_capacity 10
+  @default_write_capacity 10
 
   @namespace "DynamoDB_20120810"
 
@@ -115,6 +117,17 @@ defmodule ExAws.Dynamo do
           | :provisioned
   @type key_schema :: [{atom | binary, :hash | :range}, ...]
   @type key_definitions :: [{atom | binary, dynamo_type_names}, ...]
+  @type create_table_opts :: [
+          {:global_indexes, [map()]},
+          {:local_indexes, [map()]},
+          {:read_capacity, pos_integer},
+          {:write_capacity, pos_integer},
+          {:billing_mode, dynamo_billing_types},
+          {:stream_enabled, boolean()},
+          {:stream_view_type, stream_view_type()}
+        ]
+  @type stream_view_type :: :keys_only | :new_image | :old_image | :new_and_old_images
+  @type update_table_opts :: create_table_opts()
 
   @doc """
   Decode an item returned from Dynamo. This will handle items wrapped in the ordinary
@@ -268,18 +281,43 @@ defmodule ExAws.Dynamo do
         local_indexes,
         billing_mode \\ @default_billing_mode
       ) do
+    create_table(name, key_schema, key_definitions,
+      read_capacity: read_capacity,
+      write_capacity: write_capacity,
+      global_indexes: global_indexes,
+      local_indexes: local_indexes,
+      billing_mode: billing_mode
+    )
+  end
+
+  @doc """
+  Create table with arbitrary options. This provides a superset of the functionality of other
+  `create_table` variants, allowing the specification of any options as per the `t:create_table_opts/0`
+  type. If no options are specified, defaults will be used as follows:
+
+  * `billing_mode`: `#{inspect(@default_billing_mode)}`
+  * `read_capacity`: `#{@default_read_capacity}`
+  * `write_capacity`: `#{@default_write_capacity}`
+  * `streaming_enabled`: `false`
+  """
+  @spec create_table(binary, key_schema, key_definitions, create_table_opts) :: JSON.t()
+  def create_table(name, key_schema, key_definitions, opts \\ []) do
     data =
-      build_billing_mode(read_capacity, write_capacity, billing_mode)
+      build_billing_mode(
+        opts[:read_capacity] || @default_read_capacity,
+        opts[:write_capacity] || @default_write_capacity,
+        opts[:billing_mode] || @default_billing_mode
+      )
       |> Map.merge(%{
         "TableName" => name,
-        "AttributeDefinitions" => key_definitions |> encode_key_definitions,
-        "KeySchema" => key_schema |> build_key_schema
+        "AttributeDefinitions" => key_definitions |> encode_key_definitions(),
+        "KeySchema" => key_schema |> build_key_schema()
       })
 
     data =
       %{
-        "GlobalSecondaryIndexes" => global_indexes |> Enum.map(&camelize_keys(&1, deep: true)),
-        "LocalSecondaryIndexes" => local_indexes |> Enum.map(&camelize_keys(&1, deep: true))
+        "GlobalSecondaryIndexes" => (opts[:global_indexes] || []) |> Enum.map(&camelize_keys(&1, deep: true)),
+        "LocalSecondaryIndexes" => (opts[:local_indexes] || []) |> Enum.map(&camelize_keys(&1, deep: true))
       }
       |> Enum.reduce(data, fn
         {_, []}, data ->
@@ -288,6 +326,8 @@ defmodule ExAws.Dynamo do
         {name, indices}, data ->
           Map.put(data, name, indices)
       end)
+
+    data = Enum.reduce(opts, data, &add_table_opt/2)
 
     request(:create_table, data)
   end
@@ -328,14 +368,16 @@ defmodule ExAws.Dynamo do
   end
 
   @doc "Update Table"
-  @spec update_table(name :: binary, attributes :: Keyword.t() | map()) ::
+  @spec update_table(name :: binary, opts :: update_table_opts() | map()) ::
           JSON.t()
-  def update_table(name, attributes) do
+  def update_table(name, opts) do
     data =
-      attributes
+      opts
       |> maybe_convert_billing_mode()
       |> camelize_keys(deep: true)
       |> Map.merge(%{"TableName" => name})
+
+    data = Enum.reduce(opts, data, &add_table_opt/2)
 
     request(:update_table, data)
   end
@@ -363,6 +405,25 @@ defmodule ExAws.Dynamo do
 
   defp do_convert_billing_mode(attributes, value) when is_list(attributes),
     do: Keyword.replace!(attributes, :billing_mode, value)
+
+  defp add_table_opt({:stream_enabled, enabled}, data) do
+    data
+    |> ensure_entry("StreamSpecification")
+    |> put_in(["StreamSpecification", "StreamEnabled"], enabled)
+  end
+
+  defp add_table_opt({:stream_view_type, type}, data) do
+    data
+    |> ensure_entry("StreamSpecification")
+    |> put_in(["StreamSpecification", "StreamViewType"], type |> to_string() |> String.upcase())
+  end
+
+  defp add_table_opt(_, data) do
+    # Other opts are handled in create_table
+    data
+  end
+
+  defp ensure_entry(map, entry), do: Map.put_new(map, entry, %{})
 
   @doc "Delete Table"
   @spec delete_table(table :: binary) :: JSON.t()

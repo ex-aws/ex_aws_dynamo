@@ -99,6 +99,28 @@ defmodule ExAws.DynamoTest do
            ).data == expected
   end
 
+  test "create_table with stream config" do
+    expected = %{
+      "AttributeDefinitions" => [%{"AttributeName" => :id, "AttributeType" => "S"}],
+      "BillingMode" => "PAY_PER_REQUEST",
+      "KeySchema" => [%{"AttributeName" => :id, "KeyType" => "HASH"}],
+      "StreamSpecification" => %{
+        "StreamEnabled" => true,
+        "StreamViewType" => "KEYS_ONLY"
+      },
+      "TableName" => "TestUsers"
+    }
+
+    assert Dynamo.create_table(
+             "TestUsers",
+             [id: :hash],
+             %{id: :string},
+             billing_mode: :pay_per_request,
+             stream_enabled: true,
+             stream_view_type: :keys_only
+           ).data == expected
+  end
+
   test "#update_table" do
     expected = %{"BillingMode" => "PAY_PER_REQUEST", "TableName" => "TestUsers"}
 
@@ -131,6 +153,19 @@ defmodule ExAws.DynamoTest do
 
     assert Dynamo.update_table("TestUsers",
              provisioned_throughput: [read_capacity_units: 2, write_capacity_units: 3]
+           ).data == expected
+
+    expected = %{
+      "TableName" => "TestUsers",
+      "StreamType" => :keys_only,
+      "StreamEnabled" => true,
+      "StreamSpecification" => %{"StreamEnabled" => true}
+    }
+
+    assert Dynamo.update_table(
+             "TestUsers",
+             stream_enabled: true,
+             stream_type: :keys_only
            ).data == expected
   end
 

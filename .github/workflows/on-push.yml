@@ -8,7 +8,7 @@ jobs:
     strategy:
       matrix:
         otp: ['23.3.4.11']
-        elixir: ['1.9.4', '1.13.2']
+        elixir: ['1.10.4', '1.13.2']
     steps:
       - uses: actions/checkout@v2
       - uses: erlef/setup-elixir@v1

@@ -298,7 +298,7 @@ defmodule ExAws.Dynamo do
   * `billing_mode`: `#{inspect(@default_billing_mode)}`
   * `read_capacity`: `#{@default_read_capacity}`
   * `write_capacity`: `#{@default_write_capacity}`
-  * `streaming_enabled`: `false`
+  * `stream_enabled`: `false`
   """
   @spec create_table(binary, key_schema, key_definitions, create_table_opts) :: JSON.t()
   def create_table(name, key_schema, key_definitions, opts \\ []) do

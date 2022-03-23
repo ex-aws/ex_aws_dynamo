@@ -68,12 +68,14 @@ defmodule ExAws.Dynamo do
   @nested_opts [:exclusive_start_key, :expression_attribute_values, :expression_attribute_names]
   @upcase_opts [:return_values, :return_item_collection_metrics, :select, :total_segments]
   @top_level_update_fields [
-    :global_indexes,
-    :local_indexes,
-    :read_capacity,
-    :write_capacity,
+    :attribute_definitions,
     :billing_mode,
-    :provisioned_throughput
+    :global_indexes,
+    :global_secondary_index_updates,
+    :local_indexes,
+    :provisioned_throughput,
+    :read_capacity,
+    :write_capacity
   ]
   @special_opts @nested_opts ++ @upcase_opts
   @default_billing_mode :provisioned

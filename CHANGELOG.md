@@ -1,5 +1,10 @@
 # Changelog
 
+## v4.1.0 - 2022-03-23
+
+- Add `:stream_enabled` and `:stream_view_type` options to table creation and updates
+- Increase minimum Elixir version to 1.10
+
 ## v4.0.2 - 2021-12-24
 
 - Add :consistent_read option in scan_opts spec

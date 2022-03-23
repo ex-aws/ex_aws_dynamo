@@ -22,7 +22,9 @@ defmodule ExAws.DynamoIntegrationTest do
           "test_books",
           "TestUsersWithRange",
           "TestTransactions",
-          "TestTransactions2"
+          "TestTransactions2",
+          "TestStream",
+          "TestUpdate"
         ]
 
         DDBLocal.delete_test_tables(tables)
@@ -42,14 +44,28 @@ defmodule ExAws.DynamoIntegrationTest do
       end
 
       test "#create table with range" do
-        assert Dynamo.create_table(
-                 "TestUsersWithRange",
-                 [email: :hash, age: :range],
-                 [email: :string, age: :number],
-                 1,
-                 1
-               )
-               |> ExAws.request()
+        assert {:ok, _} =
+                 Dynamo.create_table(
+                   "TestUsersWithRange",
+                   [email: :hash, age: :range],
+                   [email: :string, age: :number],
+                   1,
+                   1
+                 )
+                 |> ExAws.request()
+      end
+
+      test "#create table with stream" do
+        assert {:ok, _} =
+                 Dynamo.create_table(
+                   "TestStream",
+                   [email: :hash, age: :range],
+                   [email: :string, age: :number],
+                   billing_mode: :pay_per_request,
+                   stream_enabled: true,
+                   stream_view_type: :new_image
+                 )
+                 |> ExAws.request()
       end
 
       test "put and get item with map values work" do
@@ -225,6 +241,30 @@ defmodule ExAws.DynamoIntegrationTest do
         ]
 
         assert {:ok, _} = Dynamo.batch_write_item(%{"test_books" => delete_requests}) |> ExAws.request()
+      end
+
+      test "update table" do
+        assert {:ok, %{"TableDescription" => %{"TableName" => "TestUpdate"}}} =
+                 Dynamo.create_table(
+                   "TestUpdate",
+                   [title: "hash", format: "range"],
+                   title: :string,
+                   format: :string
+                 )
+                 |> ExAws.request()
+
+        assert {:ok,
+                %{
+                  "TableDescription" => %{
+                    "StreamSpecification" => %{
+                      "StreamEnabled" => true,
+                      "StreamViewType" => "NEW_IMAGE"
+                    },
+                    "TableName" => "TestUpdate"
+                  }
+                }} =
+                 Dynamo.update_table("TestUpdate", stream_enabled: true, stream_view_type: :new_image)
+                 |> ExAws.request()
       end
 
     {:error, :econnrefused} ->

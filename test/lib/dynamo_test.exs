@@ -177,15 +177,16 @@ defmodule ExAws.DynamoTest do
 
     expected = %{
       "TableName" => "TestUsers",
-      "StreamType" => :keys_only,
-      "StreamEnabled" => true,
-      "StreamSpecification" => %{"StreamEnabled" => true}
+      "StreamSpecification" => %{
+        "StreamEnabled" => true,
+        "StreamViewType" => "KEYS_ONLY"
+      }
     }
 
     assert Dynamo.update_table(
              "TestUsers",
              stream_enabled: true,
-             stream_type: :keys_only
+             stream_view_type: :keys_only
            ).data == expected
   end
 

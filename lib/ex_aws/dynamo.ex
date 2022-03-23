@@ -67,6 +67,14 @@ defmodule ExAws.Dynamo do
 
   @nested_opts [:exclusive_start_key, :expression_attribute_values, :expression_attribute_names]
   @upcase_opts [:return_values, :return_item_collection_metrics, :select, :total_segments]
+  @top_level_update_fields [
+    :global_indexes,
+    :local_indexes,
+    :read_capacity,
+    :write_capacity,
+    :billing_mode,
+    :provisioned_throughput
+  ]
   @special_opts @nested_opts ++ @upcase_opts
   @default_billing_mode :provisioned
   @default_read_capacity 10
@@ -373,6 +381,7 @@ defmodule ExAws.Dynamo do
   def update_table(name, opts) do
     data =
       opts
+      |> take_opts(@top_level_update_fields)
       |> maybe_convert_billing_mode()
       |> camelize_keys(deep: true)
       |> Map.merge(%{"TableName" => name})
@@ -419,7 +428,7 @@ defmodule ExAws.Dynamo do
   end
 
   defp add_table_opt(_, data) do
-    # Other opts are handled in create_table
+    # Other opts are handled in create_table and update_table
     data
   end
 
@@ -971,4 +980,7 @@ defmodule ExAws.Dynamo do
       |> Map.merge(opts)
     )
   end
+
+  defp take_opts(map, keys) when is_map(map), do: Map.take(map, keys)
+  defp take_opts(keyword, keys) when is_list(keyword), do: Keyword.take(keyword, keys)
 end

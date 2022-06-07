@@ -274,7 +274,7 @@ defmodule ExAws.DynamoTest do
           %{
             "PutRequest" => %{
               "Item" => %{
-                "admin" => %{"BOOL" => "false"},
+                "admin" => %{"BOOL" => false},
                 "age" => %{"N" => "23"},
                 "email" => %{"S" => "foo@bar.com"},
                 "name" => %{"M" => %{"first" => %{"S" => "bob"}, "last" => %{"S" => "bubba"}}}
@@ -303,7 +303,7 @@ defmodule ExAws.DynamoTest do
   test "put item" do
     expected = %{
       "Item" => %{
-        "admin" => %{"BOOL" => "false"},
+        "admin" => %{"BOOL" => false},
         "age" => %{"N" => "23"},
         "email" => %{"S" => "foo@bar.com"},
         "name" => %{"M" => %{"first" => %{"S" => "bob"}, "last" => %{"S" => "bubba"}}}

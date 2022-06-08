@@ -6,9 +6,9 @@ defprotocol ExAws.Dynamo.Encodable do
 end
 
 defimpl ExAws.Dynamo.Encodable, for: Atom do
-  def encode(true, _), do: %{"BOOL" => "true"}
-  def encode(false, _), do: %{"BOOL" => "false"}
-  def encode(nil, _), do: %{"NULL" => "true"}
+  def encode(true, _), do: %{"BOOL" => true}
+  def encode(false, _), do: %{"BOOL" => false}
+  def encode(nil, _), do: %{"NULL" => true}
   def encode(value, _), do: %{"S" => value |> Atom.to_string()}
 end
 

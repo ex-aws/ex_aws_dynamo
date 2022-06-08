@@ -40,7 +40,7 @@ defmodule ExAws.Dynamo.EncoderTest do
     user = %Test.User{email: "foo@bar.com", name: "Bob", age: 23, admin: false}
 
     assert %{
-             "admin" => %{"BOOL" => "false"},
+             "admin" => %{"BOOL" => false},
              "age" => %{"N" => "23"},
              "email" => %{"S" => "foo@bar.com"},
              "name" => %{"S" => "Bob"}
@@ -83,7 +83,7 @@ defmodule ExAws.Dynamo.EncoderTest do
   end
 
   test "encoder nil works" do
-    assert Encoder.encode(nil) == %{"NULL" => "true"}
-    assert Encoder.encode(%{"key" => nil}) == %{"M" => %{"key" => %{"NULL" => "true"}}}
+    assert Encoder.encode(nil) == %{"NULL" => true}
+    assert Encoder.encode(%{"key" => nil}) == %{"M" => %{"key" => %{"NULL" => true}}}
   end
 end

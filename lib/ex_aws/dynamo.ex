@@ -974,6 +974,7 @@ defmodule ExAws.Dynamo do
       :dynamodb,
       %{
         data: data,
+        error_parser: &error_parser/1,
         headers: [
           {"x-amz-target", "#{@namespace}.#{operation}"},
           {"content-type", "application/x-amz-json-1.0"}
@@ -982,6 +983,16 @@ defmodule ExAws.Dynamo do
       |> Map.merge(opts)
     )
   end
+
+  # Cancelled "transactions" are specific to DynamoDB and may include
+  # additional information, so include it in the result:
+  defp error_parser(
+         {:error, {:aws_unhandled, "TransactionCanceledException" = type, message, %{"CancellationReasons" => reasons}}}
+       ) do
+    {:error, {type, message, reasons}}
+  end
+
+  defp error_parser(otherwise), do: otherwise
 
   defp take_opts(map, keys) when is_map(map), do: Map.take(map, keys)
   defp take_opts(keyword, keys) when is_list(keyword), do: Keyword.take(keyword, keys)

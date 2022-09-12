@@ -1,5 +1,11 @@
 # Changelog
 
+## v4.2.0 - 2022-09-12
+
+- Add info on transaction failures
+- Increase minimum ex_aws version to 2.4.0
+- Fix encoding of boolean attributes
+
 ## v4.1.0 - 2022-03-23
 
 - Add `:stream_enabled` and `:stream_view_type` options to table creation and updates

@@ -150,8 +150,8 @@ defmodule ExAws.Dynamo do
   |> Dynamo.decode_item(as: User)
   ```
   """
-  @spec decode_item(map()) :: map()
-  @spec decode_item(map(), as: atom) :: map()
+  @spec decode_item(map()) :: map() | [map()]
+  @spec decode_item(map(), as: atom) :: map() | [map()]
   def decode_item(item, opts \\ [])
 
   def decode_item(%{"Items" => items}, opts) do

@@ -1,5 +1,9 @@
 # Changelog
 
+## v4.2.1 - 2023-02-12
+
+- Fixes spec
+
 ## v4.2.0 - 2022-09-12
 
 - Add info on transaction failures

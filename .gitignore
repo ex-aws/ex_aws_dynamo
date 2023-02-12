@@ -1,6 +1,7 @@
 # Top level
 deps
 log
+doc
 
 # vim gitignore files
 *~
@@ -12,3 +13,6 @@ _build
 
 # DS_Store
 *.DS_Store
+
+# local test config
+config/ddb_local_test.exs

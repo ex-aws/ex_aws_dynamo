@@ -69,7 +69,7 @@ defmodule ExAws.Dynamo.Decoder do
 
   @doc "Converts a map with binary keys to the specified struct"
   def binary_map_to_struct(bmap, module) do
-    module.__struct__
+    module.__struct__()
     |> Map.from_struct()
     |> Enum.reduce(%{}, fn {k, v}, map ->
       Map.put(map, k, Map.get(bmap, Atom.to_string(k), v))

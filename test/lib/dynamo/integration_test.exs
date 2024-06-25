@@ -118,6 +118,68 @@ defmodule ExAws.DynamoIntegrationTest do
         assert Enum.at(items, 1) == user2
       end
 
+      test "condition failure with return_values_on_condition_check_failure specified returns expected error" do
+        user = %Test.User{
+          email: "foo@bar.com",
+          name: %{first: "bob", last: "bubba"},
+          age: 25,
+          admin: false
+        }
+
+        operations = [
+          {"put_item", fn opts -> Dynamo.put_item(Test.User, user, opts) end},
+          {"update_item", fn opts -> Dynamo.update_item(Test.User, [email: user.email], opts) end},
+          {"delete_item", fn opts -> Dynamo.delete_item(Test.User, [email: user.email], opts) end}
+        ]
+
+        Enum.each(operations, fn {name, operation} ->
+          DDBLocal.delete_test_tables([Test.User])
+
+          {:ok, _} = Dynamo.create_table(Test.User, :email, [email: :string], 1, 1) |> ExAws.request()
+
+          # When the condition failure return value is all_old but there is no old
+          # item, the error is returned without an item
+          assert {:error, {"ConditionalCheckFailedException", "The conditional request failed"}} =
+                   operation.(
+                     condition_expression: "email = :email",
+                     expression_attribute_values: [email: "does-not-exist"],
+                     return_values_on_condition_check_failure: :all_old
+                   )
+                   |> ExAws.request()
+
+          {:ok, _} = Dynamo.put_item(Test.User, user) |> ExAws.request()
+
+          # Ensure the default condition failure return value is none and thus no item is returned
+          assert {:error, {"ConditionalCheckFailedException", "The conditional request failed"}} =
+                   operation.(
+                     condition_expression: "email = :email",
+                     expression_attribute_values: [email: "does-not-exist"]
+                   )
+                   |> ExAws.request()
+
+          # When the condition failure return value is none, no item is returned
+          assert {:error, {"ConditionalCheckFailedException", "The conditional request failed"}} =
+                   operation.(
+                     condition_expression: "email = :email",
+                     expression_attribute_values: [email: "does-not-exist"],
+                     return_values_on_condition_check_failure: :none
+                   )
+                   |> ExAws.request(),
+                 name
+
+          # When the condition failure return value is all_old, the old item is returned
+          assert {:error, {"ConditionalCheckFailedException", "The conditional request failed", 123 = user_item}} =
+                   operation.(
+                     condition_expression: "email = :email",
+                     expression_attribute_values: [email: "does-not-exist"],
+                     return_values_on_condition_check_failure: :all_old
+                   )
+                   |> ExAws.request()
+
+          assert Dynamo.decode_item(user_item, as: Test.User) == user
+        end)
+      end
+
       test "transactions work" do
         {:ok, _} = Dynamo.create_table("TestTransactions", :email, [email: :string], 1, 1) |> ExAws.request()
         {:ok, _} = Dynamo.create_table("TestTransactions2", :email, [email: :string], 1, 1) |> ExAws.request()

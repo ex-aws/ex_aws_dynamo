@@ -66,7 +66,13 @@ defmodule ExAws.Dynamo do
   alias ExAws.Operation.JSON
 
   @nested_opts [:exclusive_start_key, :expression_attribute_values, :expression_attribute_names]
-  @upcase_opts [:return_values, :return_item_collection_metrics, :select, :total_segments]
+  @upcase_opts [
+    :return_values,
+    :return_item_collection_metrics,
+    :return_values_on_condition_check_failure,
+    :select,
+    :total_segments
+  ]
   @top_level_update_fields [
     :attribute_definitions,
     :billing_mode,
@@ -644,6 +650,7 @@ defmodule ExAws.Dynamo do
           | {:return_consumed_capacity, return_consumed_capacity_vals}
           | {:return_item_collection_metrics, return_item_collection_metrics_vals}
           | {:return_values, return_values_vals}
+          | {:return_values_on_condition_check_failure, return_values_on_condition_check_failure_vals}
         ]
   @spec put_item(table_name :: table_name, record :: map()) :: JSON.t()
   @spec put_item(table_name :: table_name, record :: map(), opts :: put_item_opts) ::
@@ -740,6 +747,7 @@ defmodule ExAws.Dynamo do
           | {:return_consumed_capacity, return_consumed_capacity_vals}
           | {:return_item_collection_metrics, return_item_collection_metrics_vals}
           | {:return_values, return_values_vals}
+          | {:return_values_on_condition_check_failure, return_values_on_condition_check_failure_vals}
           | {:update_expression, binary}
         ]
   @spec update_item(
@@ -767,6 +775,7 @@ defmodule ExAws.Dynamo do
           | {:return_consumed_capacity, return_consumed_capacity_vals}
           | {:return_item_collection_metrics, return_item_collection_metrics_vals}
           | {:return_values, return_values_vals}
+          | {:return_values_on_condition_check_failure, return_values_on_condition_check_failure_vals}
         ]
   @spec delete_item(table_name :: table_name, primary_key :: primary_key) ::
           JSON.t()
@@ -900,6 +909,7 @@ defmodule ExAws.Dynamo do
     |> add_upcased_opt(opts, :return_item_collection_metrics)
     |> add_upcased_opt(opts, :select)
     |> add_upcased_opt(opts, :return_values)
+    |> add_upcased_opt(opts, :return_values_on_condition_check_failure)
     |> add_upcased_opt(opts, :return_consumed_capacity)
     |> camelize_keys
     |> build_special_opts(opts)
@@ -990,6 +1000,12 @@ defmodule ExAws.Dynamo do
          {:error, {:aws_unhandled, "TransactionCanceledException" = type, message, %{"CancellationReasons" => reasons}}}
        ) do
     {:error, {type, message, reasons}}
+  end
+
+  # Condition check failures may include the item that failed the check, when
+  # `return_values_on_condition_check_failure` is set to `:all_old`
+  defp error_parser({:error, {:aws_unhandled, "ConditionalCheckFailedException" = type, message, %{"Item" => item}}}) do
+    {:error, {type, message, item}}
   end
 
   defp error_parser(otherwise), do: otherwise

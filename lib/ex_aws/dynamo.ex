@@ -747,6 +747,7 @@ defmodule ExAws.Dynamo do
           | {:return_consumed_capacity, return_consumed_capacity_vals}
           | {:return_item_collection_metrics, return_item_collection_metrics_vals}
           | {:return_values, return_values_vals}
+          | {:return_values_on_condition_check_failure, return_values_on_condition_check_failure_vals}
           | {:update_expression, binary}
         ]
   @spec update_item(

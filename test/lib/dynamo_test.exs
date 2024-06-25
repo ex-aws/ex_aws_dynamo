@@ -387,6 +387,32 @@ defmodule ExAws.DynamoTest do
     assert Dynamo.update_item("Users", [email: "foo@bar.com"], opts).data == expected
   end
 
+  test "delete item with opts" do
+    expected = %{
+      "Key" => %{"email" => %{"S" => "foo@bar.com"}},
+      "TableName" => "Users",
+      "ConditionExpression" => "email = :email",
+      "ExpressionAttributeNames" => %{"#admin" => "admin"},
+      "ExpressionAttributeValues" => %{":admin" => %{"BOOL" => true}},
+      "ReturnConsumedCapacity" => "TOTAL",
+      "ReturnItemCollectionMetrics" => "SIZE",
+      "ReturnValues" => "ALL_OLD",
+      "ReturnValuesOnConditionCheckFailure" => "ALL_OLD"
+    }
+
+    opts = [
+      condition_expression: "email = :email",
+      expression_attribute_names: %{"#admin" => "admin"},
+      expression_attribute_values: [admin: true],
+      return_consumed_capacity: :total,
+      return_item_collection_metrics: :size,
+      return_values: :all_old,
+      return_values_on_condition_check_failure: :all_old
+    ]
+
+    assert Dynamo.delete_item("Users", [email: "foo@bar.com"], opts).data == expected
+  end
+
   test "update_time_to_live" do
     expected = %{
       "TableName" => "Users",

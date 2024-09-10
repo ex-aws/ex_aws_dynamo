@@ -6,26 +6,74 @@ env:
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 jobs:
   build:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
-        otp: ["23.3.4.6"]
-        elixir: ["1.10.4", "1.11.4", "1.12.3", "1.13.4", "1.14.2"]
+        include:
+          - pair:
+              otp: 27.x
+              elixir: 1.17.x
+              lint: lint
+
+          - pair:
+              otp: 26.x
+              elixir: 1.17.x
+          - pair:
+              otp: 26.x
+              elixir: 1.16.x
+          - pair:
+              otp: 26.x
+              elixir: 1.15.x
+
+          - pair:
+              otp: 25.x
+              elixir: 1.17.x
+          - pair:
+              otp: 25.x
+              elixir: 1.16.x
+          - pair:
+              otp: 25.x
+              elixir: 1.15.x
+          - pair:
+              otp: 25.x
+              elixir: 1.14.x
+
+          - pair:
+              otp: 24.x
+              elixir: 1.16.x
+          - pair:
+              otp: 24.x
+              elixir: 1.15.x
+          - pair:
+              otp: 24.x
+              elixir: 1.14.x
+          - pair:
+              otp: 24.x
+              elixir: 1.13.x
+
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - uses: erlef/setup-beam@v1
         with:
-          otp-version: ${{matrix.otp}}
-          elixir-version: ${{matrix.elixir}}
+          otp-version: ${{matrix.pair.otp}}
+          elixir-version: ${{matrix.pair.elixir}}
           version-type: strict
       - uses: rrainn/dynamodb-action@v2.0.0
         with:
           port: 8000
           cors: "*"
+      - uses: actions/cache@v3
+        with:
+          path: |
+            deps
+            _build
+          key: ${{ runner.os }}-mix-${{matrix.pair.otp}}-${{matrix.pair.elixir}}-${{ hashFiles('**/mix.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-mix-${{matrix.pair.otp}}-${{matrix.pair.elixir}}-
       - run: mix deps.get
       - run: mix compile
       - run: mix format --check-formatted
-        if: matrix.elixir == '1.14.2' # Only check formatting with the latest verison
+        if: ${{matrix.lint}}
       - run: mix dialyzer
-        if: matrix.elixir == '1.14.2'
+        if: ${{matrix.lint}}
       - run: mix test

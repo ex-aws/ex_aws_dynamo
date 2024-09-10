@@ -1,5 +1,10 @@
 # Changelog
 
+## v4.2.2 - 2024-09-10
+
+- Support condition failure return values
+- Fixes for warnings in Elixir 1.17
+
 ## v4.2.1 - 2023-02-12
 
 - Fixes spec

@@ -1,7 +1,7 @@
 defmodule ExAws.Dynamo.Mixfile do
   use Mix.Project
 
-  @version "4.2.1"
+  @version "4.2.2"
   @service "dynamo"
   @url "https://github.com/ex-aws/ex_aws_#{@service}"
   @name __MODULE__ |> Module.split() |> Enum.take(2) |> Enum.join(".")
@@ -10,7 +10,7 @@ defmodule ExAws.Dynamo.Mixfile do
     [
       app: :ex_aws_dynamo,
       version: @version,
-      elixir: "~> 1.10",
+      elixir: "~> 1.13",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       deps: deps(),

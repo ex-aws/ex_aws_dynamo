@@ -88,12 +88,14 @@ defmodule ExAws.Dynamo.EncoderTest do
   end
 
   test "encoder skips struct fields that are marked as excepted" do
-    user_except = %Test.ExceptUser{email: "foo@bar.com", name: "Bob", age: 23, secret: "secret information"} |> Encoder.encode_root()
+    user_except =
+      %Test.ExceptUser{email: "foo@bar.com", name: "Bob", age: 23, secret: "secret information"}
+      |> Encoder.encode_root()
 
     assert %{
-      "age" => %{"M" => %{"N" => %{"S" => "23"}}},
-      "email" => %{"M" => %{"S" => %{"S" => "foo@bar.com"}}},
-      "name" => %{"M" => %{"S" => %{"S" => "Bob"}}}
-    } = Encoder.encode_root(user_except)
+             "age" => %{"M" => %{"N" => %{"S" => "23"}}},
+             "email" => %{"M" => %{"S" => %{"S" => "foo@bar.com"}}},
+             "name" => %{"M" => %{"S" => %{"S" => "Bob"}}}
+           } = Encoder.encode_root(user_except)
   end
 end

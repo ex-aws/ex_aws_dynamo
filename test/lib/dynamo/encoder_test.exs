@@ -96,6 +96,6 @@ defmodule ExAws.Dynamo.EncoderTest do
              "age" => %{"M" => %{"N" => %{"S" => "23"}}},
              "email" => %{"M" => %{"S" => %{"S" => "foo@bar.com"}}},
              "name" => %{"M" => %{"S" => %{"S" => "Bob"}}}
-           } = Encoder.encode_root(user_except)
+           } == Encoder.encode_root(user_except)
   end
 end

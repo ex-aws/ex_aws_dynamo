@@ -37,10 +37,10 @@ defimpl ExAws.Dynamo.Encodable, for: Any do
 
   def deriving(module, _struct, options) do
     extractor =
-      if only = options[:only] do
-        quote(do: Map.take(struct, unquote(only)))
-      else
-        quote(do: :maps.remove(:__struct__, struct))
+      cond do
+        only = options[:only] -> quote(do: Map.take(struct, unquote(only)))
+        except = options[:except] -> quote(do: Map.drop(struct, [:__struct__] ++ unquote(except)))
+        true -> quote(do: :maps.remove(:__struct__, struct))
       end
 
     quote do

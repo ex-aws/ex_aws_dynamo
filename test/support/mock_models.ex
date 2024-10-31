@@ -17,3 +17,9 @@ defmodule Test.Nested do
   @derive {ExAws.Dynamo.Encodable, only: [:items]}
   defstruct items: [], secret: nil
 end
+
+defmodule Test.ExceptUser do
+  @moduledoc false
+  @derive {ExAws.Dynamo.Encodable, except: [:secret]}
+  defstruct [:email, :name, :age, :secret]
+end

@@ -202,7 +202,7 @@ defmodule ExAws.DynamoIntegrationTest do
           admin: true
         }
 
-        assert {:error, {"TransactionCanceledException", _}} =
+        assert {:error, {"TransactionCanceledException", _, _}} =
                  Dynamo.transact_write_items(
                    put: {"TestTransactions", user2},
                    condition_check:

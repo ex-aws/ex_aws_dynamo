@@ -168,7 +168,7 @@ defmodule ExAws.DynamoIntegrationTest do
                  name
 
           # When the condition failure return value is all_old, the old item is returned
-          assert {:error, {"ConditionalCheckFailedException", "The conditional request failed", 123 = user_item}} =
+          assert {:error, {"ConditionalCheckFailedException", "The conditional request failed", user_item}} =
                    operation.(
                      condition_expression: "email = :email",
                      expression_attribute_values: [email: "does-not-exist"],
@@ -202,7 +202,7 @@ defmodule ExAws.DynamoIntegrationTest do
           admin: true
         }
 
-        assert {:error, {"TransactionCanceledException", _}} =
+        assert {:error, {"TransactionCanceledException", _, _}} =
                  Dynamo.transact_write_items(
                    put: {"TestTransactions", user2},
                    condition_check:

@@ -94,7 +94,8 @@ defmodule ExAws.Dynamo do
   ######################
 
   @type table_name :: binary
-  @type primary_key :: [{atom, binary}] | %{atom => binary}
+  @type primary_key_val :: number | binary
+  @type primary_key :: [{atom, primary_key_val}] | %{atom => primary_key_val}
   @type exclusive_start_key_vals :: [{atom, binary}] | %{atom => binary}
   @type expression_attribute_names_vals :: %{binary => binary}
   @type expression_attribute_values_vals ::

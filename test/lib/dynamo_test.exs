@@ -236,6 +236,28 @@ defmodule ExAws.DynamoTest do
            ).data == expected
   end
 
+  test "#query encodes expression attribute values that merely look like Dynamo values" do
+    # A user-controlled map containing a type-descriptor key must be encoded as a Map,
+    # not sent to DynamoDB verbatim as an attacker-chosen AttributeValue.
+    data =
+      Dynamo.query("Products",
+        key_condition_expression: "attr = :val",
+        expression_attribute_values: [val: %{"N" => "evil"}]
+      ).data
+
+    assert data["ExpressionAttributeValues"] == %{":val" => %{"M" => %{"N" => %{"S" => "evil"}}}}
+  end
+
+  test "#query passes through explicitly pre-encoded expression attribute values" do
+    data =
+      Dynamo.query("Products",
+        key_condition_expression: "attr = :val",
+        expression_attribute_values: [val: Dynamo.Encoded.new(%{"B" => "dGVzdA=="})]
+      ).data
+
+    assert data["ExpressionAttributeValues"] == %{":val" => %{"B" => "dGVzdA=="}}
+  end
+
   test "#batch_get_item" do
     expected = %{
       "RequestItems" => %{

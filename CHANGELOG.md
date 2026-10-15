@@ -1,5 +1,29 @@
 # Changelog
 
+## Unreleased
+
+### Security
+
+- `ExAws.Dynamo.Encoder.encode/2` no longer treats a map that merely contains a DynamoDB
+  type-descriptor key (`"S"`, `"N"`, `"B"`, `"BOOL"`, `"NULL"`, `"M"`, `"L"`, `"SS"`, `"NS"`, `"BS"`)
+  as already encoded. Previously such a map was sent to DynamoDB verbatim, so user-controlled data
+  (for example a decoded JSON body passed in `expression_attribute_values`) could choose the raw
+  `AttributeValue` type and contents that were sent and stored. All maps are now encoded as `M`.
+- **Breaking:** to pass a value that is already in DynamoDB format, wrap it explicitly with
+  `ExAws.Dynamo.Encoded.new/1`, for example
+  `expression_attribute_values: [api_key: ExAws.Dynamo.Encoded.new(%{"B" => "dGVzdA=="})]`.
+  The wrapper validates the value and works anywhere an encodable value is accepted, including
+  nested inside items.
+- `ExAws.Dynamo.Encoder.encode!/2` is deprecated; it is now identical to `encode/2`.
+
+### Fixed
+
+- `ExAws.Dynamo.Decoder.decode/1` no longer misinterprets the attributes of a nested `M` value as
+  a typed `AttributeValue` when an attribute is named like a type descriptor. Previously a stored
+  map such as `%{"S" => 1}` decoded to `%{"N" => "1"}`, and `%{"L" => "x"}` raised
+  `FunctionClauseError`. The typed clauses now also check the value's shape, so a top-level item
+  with an attribute named e.g. `"S"` is no longer collapsed to that attribute's value.
+
 ## v4.2.2 - 2024-09-10
 
 - Support condition failure return values

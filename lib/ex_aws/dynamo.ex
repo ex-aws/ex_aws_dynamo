@@ -41,20 +41,25 @@ defmodule ExAws.Dynamo do
   ```
   transforms into a query of
   ```elixir
-  %{"ExpressionAttributeValues" => %{api_key: %{"S" => "foo"}}, "TableName" => "Users"}
+  %{"ExpressionAttributeValues" => %{":api_key" => %{"S" => "foo"}}, "TableName" => "Users"}
   ```
 
   Consult the function documentation to see precisely which options are handled this way.
 
-  If you wish to avoid this kind of automatic behaviour, you are free to specify the types yourself.
-  For example,
+  If you wish to avoid this kind of automatic behaviour, you are free to specify the types yourself
+  by wrapping an already-encoded value in `ExAws.Dynamo.Encoded`. For example,
   ```elixir
-  ExAws.Dynamo.scan("Users", expression_attribute_values: [api_key: %{"B" => "Treated as binary"}])
+  ExAws.Dynamo.scan("Users",
+    expression_attribute_values: [api_key: ExAws.Dynamo.Encoded.new(%{"B" => "VHJlYXRlZCBhcyBiaW5hcnk="})]
+  )
   ```
   becomes
   ```elixir
-  %{"ExpressionAttributeValues" => %{api_key: %{"B" => "Treated as binary"}}, "TableName" => "Users"}
+  %{"ExpressionAttributeValues" => %{":api_key" => %{"B" => "VHJlYXRlZCBhcyBiaW5hcnk="}}, "TableName" => "Users"}
   ```
+  A plain map that merely looks like a Dynamo-typed value, such as `%{"B" => "..."}`, is *not* passed
+  through: it is encoded as an ordinary map with a key named `"B"`. Deciding by shape would let
+  user-controlled data (for example a decoded JSON body) choose the raw type that is sent to DynamoDB.
   Alternatively, if what's being encoded is a struct, you're always free to implement ExAws.Dynamo.Encodable for that struct.
 
   https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Operations.html

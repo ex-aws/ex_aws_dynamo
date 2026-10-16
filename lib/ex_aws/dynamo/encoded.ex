@@ -47,11 +47,29 @@ defmodule ExAws.Dynamo.Encoded do
   end
 
   @doc """
+  Wraps each value of `attributes`, a map of attribute name => `AttributeValue` such as the
+  `LastEvaluatedKey` of a `Query` or `Scan` response or a key from `UnprocessedKeys`, so
+  that the whole map can be handed back to DynamoDB unchanged:
+
+  ```elixir
+  ExAws.Dynamo.scan("Users",
+    exclusive_start_key: ExAws.Dynamo.Encoded.attributes(response["LastEvaluatedKey"])
+  )
+  ```
+
+  Raises `ArgumentError` if any value is not a well-formed `AttributeValue`.
+  """
+  @spec attributes(%{optional(term()) => map()}) :: %{optional(term()) => t()}
+  def attributes(attributes) when is_map(attributes) and not is_struct(attributes) do
+    Map.new(attributes, fn {name, value} -> {name, new(value)} end)
+  end
+
+  @doc """
   Returns `true` if `value` is a well-formed DynamoDB `AttributeValue`.
   """
   @spec valid?(term()) :: boolean()
   def valid?(%{"S" => value} = map) when map_size(map) == 1, do: is_binary(value)
-  def valid?(%{"N" => value} = map) when map_size(map) == 1, do: is_binary(value)
+  def valid?(%{"N" => value} = map) when map_size(map) == 1, do: number_string?(value)
   def valid?(%{"B" => value} = map) when map_size(map) == 1, do: is_binary(value)
   def valid?(%{"BOOL" => value} = map) when map_size(map) == 1, do: is_boolean(value)
   def valid?(%{"NULL" => value} = map) when map_size(map) == 1, do: value == true
@@ -71,6 +89,13 @@ defmodule ExAws.Dynamo.Encoded do
   def valid?(_), do: false
 
   defp list_of_binaries?(values), do: is_list(values) and Enum.all?(values, &is_binary/1)
+
+  # DynamoDB numbers travel as decimal strings: optional sign, digits with an optional
+  # fraction, optional exponent.
+  defp number_string?(value) when is_binary(value),
+    do: Regex.match?(~r/\A[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?\z/, value)
+
+  defp number_string?(_), do: false
 end
 
 defimpl ExAws.Dynamo.Encodable, for: ExAws.Dynamo.Encoded do

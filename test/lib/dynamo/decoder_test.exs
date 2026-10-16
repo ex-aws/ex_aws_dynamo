@@ -101,4 +101,28 @@ defmodule ExAws.Dynamo.DecoderTest do
              })
            ) == "Encoder can handle binaries that are not strings"
   end
+
+  defmodule Rec do
+    defstruct [:id, :M]
+  end
+
+  test "decode_item/1 handles items with attributes named like type descriptors, including M" do
+    item = %{"M" => %{"S" => "x"}, "id" => %{"S" => "1"}}
+    assert Decoder.decode_item(item) == %{"M" => "x", "id" => "1"}
+    assert Decoder.decode(item) == %{"M" => "x", "id" => "1"}
+
+    nested = %{"M" => %{"M" => %{"a" => %{"S" => "x"}}}, "id" => %{"S" => "1"}}
+    assert Decoder.decode_item(nested) == %{"M" => %{"a" => "x"}, "id" => "1"}
+    assert Decoder.decode(nested) == %{"M" => %{"a" => "x"}, "id" => "1"}
+
+    # Only decode_item/1 can tell a single-attribute item named "M" from an M value.
+    assert Decoder.decode_item(%{"M" => %{"S" => "x"}}) == %{"M" => "x"}
+    assert Decoder.decode(%{"M" => %{"a" => %{"S" => "x"}}}) == %{"a" => "x"}
+  end
+
+  test "decode_item/2 coerces into a struct" do
+    item = %{"M" => %{"S" => "x"}, "id" => %{"S" => "1"}}
+    assert Decoder.decode_item(item, as: Rec) == %Rec{id: "1", M: "x"}
+    assert Decoder.decode(item, as: Rec) == %Rec{id: "1", M: "x"}
+  end
 end

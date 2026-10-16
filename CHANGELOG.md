@@ -14,6 +14,11 @@
   `expression_attribute_values: [api_key: ExAws.Dynamo.Encoded.new(%{"B" => "dGVzdA=="})]`.
   The wrapper validates the value and works anywhere an encodable value is accepted, including
   nested inside items.
+- **Breaking:** a `LastEvaluatedKey` (or any other map of attribute name => `AttributeValue`
+  taken from a response) is no longer recognised by shape when passed back as `exclusive_start_key`
+  or as a `batch_get_item` key. Wrap it with the new `ExAws.Dynamo.Encoded.attributes/1`:
+  `exclusive_start_key: ExAws.Dynamo.Encoded.attributes(response["LastEvaluatedKey"])`.
+  `ExAws.stream!/2` over `scan` and `query` does this internally.
 - `ExAws.Dynamo.Encoder.encode!/2` is deprecated; it is now identical to `encode/2`.
 
 ### Fixed
@@ -23,6 +28,12 @@
   map such as `%{"S" => 1}` decoded to `%{"N" => "1"}`, and `%{"L" => "x"}` raised
   `FunctionClauseError`. The typed clauses now also check the value's shape, so a top-level item
   with an attribute named e.g. `"S"` is no longer collapsed to that attribute's value.
+- `ExAws.Dynamo.decode_item/2` now decodes through the new `ExAws.Dynamo.Decoder.decode_item/2`,
+  which treats its argument as an item unconditionally. (An `M` `AttributeValue` is no longer
+  unwrapped by `decode_item/2`; use `ExAws.Dynamo.Decoder.decode/2` for that.) Previously an item with an attribute named
+  `"M"` was mistaken for an `M` value, which raised `FunctionClauseError` or dropped the other
+  attributes. `decode_item/1` without options also no longer raises.
+- `ExAws.Dynamo.Encoded.new/1` rejects an `N` whose string is not a decimal number.
 
 ## v4.2.2 - 2024-09-10
 

@@ -53,4 +53,29 @@ defmodule ExAws.Dynamo.EncodedTest do
       assert_raise ArgumentError, ~r/expected a DynamoDB AttributeValue/, fn -> Encoded.new(value) end
     end
   end
+
+  test "new/1 requires N to be a decimal number string" do
+    for n <- ["1", "-1", "1.5", "-0.25", "1.0e10", "1e-5", "+3", ".5", "123456789012345678901234567890"] do
+      assert Encoded.valid?(%{"N" => n}), n
+    end
+
+    for n <- ["evil", "", "1,5", "0x10", " 1", "1 ", "NaN", "1e", "1e5.5", 1] do
+      refute Encoded.valid?(%{"N" => n}), inspect(n)
+    end
+
+    assert_raise ArgumentError, fn -> Encoded.new(%{"N" => "evil"}) end
+  end
+
+  test "attributes/1 wraps every value of an attribute-name => AttributeValue map" do
+    key = %{"pk" => %{"S" => "a"}, "sk" => %{"N" => "7"}}
+
+    assert Encoded.attributes(key) == %{
+             "pk" => %Encoded{value: %{"S" => "a"}},
+             "sk" => %Encoded{value: %{"N" => "7"}}
+           }
+
+    assert Encoded.attributes(%{}) == %{}
+    assert_raise ArgumentError, fn -> Encoded.attributes(%{"pk" => %{"S" => 1}}) end
+    assert_raise ArgumentError, fn -> Encoded.attributes(%{"pk" => "a"}) end
+  end
 end

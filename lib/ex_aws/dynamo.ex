@@ -101,7 +101,8 @@ defmodule ExAws.Dynamo do
   @type table_name :: binary
   @type primary_key_val :: number | binary
   @type primary_key :: [{atom, primary_key_val}] | %{atom => primary_key_val}
-  @type exclusive_start_key_vals :: [{atom, binary}] | %{atom => binary}
+  @type exclusive_start_key_vals ::
+          [{atom, binary}] | %{atom => binary} | %{binary => Dynamo.Encoded.t()}
   @type expression_attribute_names_vals :: %{binary => binary}
   @type expression_attribute_values_vals ::
           [{atom, Dynamo.Encodable.t()}] | %{atom => Dynamo.Encodable.t()}
@@ -175,7 +176,7 @@ defmodule ExAws.Dynamo do
   end
 
   def decode_item(item, opts) do
-    Decoder.decode(item, opts)
+    Decoder.decode_item(item, opts)
   end
 
   @doc "List tables"
@@ -508,6 +509,10 @@ defmodule ExAws.Dynamo do
 
   Parameters with keys that are automatically annotated with Dynamo types are:
   `[:exclusive_start_key, :expression_attribute_names]`
+
+  To continue from a previous page, pass the response's `LastEvaluatedKey`, which is already in
+  DynamoDB format, wrapped with `ExAws.Dynamo.Encoded.attributes/1`:
+  `exclusive_start_key: ExAws.Dynamo.Encoded.attributes(response["LastEvaluatedKey"])`.
   """
   @type scan_opts :: [
           {:consistent_read, boolean}
@@ -548,6 +553,10 @@ defmodule ExAws.Dynamo do
 
   Parameters with keys that are automatically annotated with dynamo types are:
   `[:exclusive_start_key, :expression_attribute_names]`
+
+  To continue from a previous page, pass the response's `LastEvaluatedKey`, which is already in
+  DynamoDB format, wrapped with `ExAws.Dynamo.Encoded.attributes/1`:
+  `exclusive_start_key: ExAws.Dynamo.Encoded.attributes(response["LastEvaluatedKey"])`.
   """
   @type query_opts :: [
           {:consistent_read, boolean}

@@ -513,4 +513,31 @@ defmodule ExAws.DynamoTest do
     assert Enum.at(request.headers, 0) == {"x-amz-target", "DynamoDB_20120810.TransactWriteItems"}
     assert request.data == expected
   end
+
+  test "#scan and #query pass a wire-format exclusive_start_key through when wrapped" do
+    key = %{"id" => %{"S" => "user-42"}, "ts" => %{"N" => "7"}}
+    wrapped = ExAws.Dynamo.Encoded.attributes(key)
+
+    assert Dynamo.scan("Users", exclusive_start_key: wrapped).data["ExclusiveStartKey"] == key
+    assert Dynamo.query("Users", exclusive_start_key: wrapped).data["ExclusiveStartKey"] == key
+
+    # Unwrapped, the key is caller data and is encoded like any other map.
+    assert Dynamo.scan("Users", exclusive_start_key: key).data["ExclusiveStartKey"] ==
+             %{"id" => %{"M" => %{"S" => %{"S" => "user-42"}}}, "ts" => %{"M" => %{"N" => %{"S" => "7"}}}}
+  end
+
+  test "#batch_get_item accepts wire-format keys wrapped with Encoded.attributes/1" do
+    keys = [%{"id" => %{"S" => "1"}}, %{"id" => %{"S" => "2"}}]
+    wrapped = Enum.map(keys, &ExAws.Dynamo.Encoded.attributes/1)
+
+    assert Dynamo.batch_get_item(%{"Users" => [keys: wrapped]}).data["RequestItems"]["Users"]["Keys"] ==
+             keys
+  end
+
+  test "#decode_item works without options and with an attribute named M" do
+    item = %{"M" => %{"S" => "x"}, "id" => %{"S" => "1"}}
+    assert Dynamo.decode_item(item) == %{"M" => "x", "id" => "1"}
+    assert Dynamo.decode_item(%{"Item" => item}) == %{"M" => "x", "id" => "1"}
+    assert Dynamo.decode_item(%{"Items" => [item]}) == [%{"M" => "x", "id" => "1"}]
+  end
 end

@@ -67,7 +67,7 @@ defmodule ExAws.Dynamo do
 
   import ExAws.Utils, only: [camelize: 1, camelize_keys: 1, camelize_keys: 2, upcase: 1]
   alias __MODULE__
-  alias ExAws.Dynamo.{Decoder, Lazy}
+  alias ExAws.Dynamo.{Decoder, Encoded, Lazy}
   alias ExAws.Operation.JSON
 
   @nested_opts [:exclusive_start_key, :expression_attribute_values, :expression_attribute_names]
@@ -153,8 +153,14 @@ defmodule ExAws.Dynamo do
   @type update_table_opts :: create_table_opts()
 
   @doc """
-  Decode an item returned from Dynamo. This will handle items wrapped in the ordinary
-  `get_item` response map of `%{"Item" => item}`.
+  Decode an item returned from Dynamo.
+
+  Accepts a bare item, such as one yielded by `ExAws.stream!/2`, a `get_item` response
+  (`%{"Item" => item}`), or a `query` or `scan` response (`%{"Items" => items}`), which decodes
+  to a list. A response is unwrapped once and what it holds is decoded as an item, so an item may
+  itself have attributes named `"Item"` or `"Items"`. Such an item is told apart from a response
+  by the value under that key: in an item it is a single `AttributeValue`, in a response it is a
+  map of attribute name => `AttributeValue` or a list of those, and no map is both.
 
   ## Example
   ```elixir
@@ -167,12 +173,21 @@ defmodule ExAws.Dynamo do
   @spec decode_item(map(), as: atom) :: map() | [map()]
   def decode_item(item, opts \\ [])
 
-  def decode_item(%{"Items" => items}, opts) do
-    for item <- items, do: decode_item(item, opts)
+  # An attribute's value is always a map, so a list here can only be the Items of a Query or
+  # Scan response.
+  def decode_item(%{"Items" => items}, opts) when is_list(items) do
+    for item <- items, do: Decoder.decode_item(item, opts)
   end
 
-  def decode_item(%{"Item" => item}, opts) do
-    decode_item(item, opts)
+  # An item can have an attribute named "Item" too. Its value is then a single AttributeValue,
+  # whereas the Item of a GetItem response is a map of attribute name => AttributeValue, and no
+  # map is both.
+  def decode_item(%{"Item" => item} = map, opts) do
+    if Encoded.valid?(item) do
+      Decoder.decode_item(map, opts)
+    else
+      Decoder.decode_item(item, opts)
+    end
   end
 
   def decode_item(item, opts) do

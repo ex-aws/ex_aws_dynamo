@@ -33,6 +33,13 @@
   unwrapped by `decode_item/2`; use `ExAws.Dynamo.Decoder.decode/2` for that.) Previously an item with an attribute named
   `"M"` was mistaken for an `M` value, which raised `FunctionClauseError` or dropped the other
   attributes. `decode_item/1` without options also no longer raises.
+- `ExAws.Dynamo.decode_item/2` unwraps a `get_item`, `query` or `scan` response once and decodes
+  what it holds as an item instead of dispatching on its shape again. Previously an item with an
+  attribute named `"Item"` or `"Items"` was unwrapped a second time, which raised
+  `FunctionClauseError` or returned that attribute's value in place of the item, both for items
+  inside a response and for bare items such as those yielded by `ExAws.stream!/2`. A bare item is
+  told apart from a response by the value under `"Item"`/`"Items"`: an `AttributeValue` in an
+  item, a map of attributes or a list of those in a response.
 - `ExAws.Dynamo.Encoded.new/1` rejects an `N` whose string is not a decimal number.
 
 ## v4.2.2 - 2024-09-10

@@ -540,4 +540,26 @@ defmodule ExAws.DynamoTest do
     assert Dynamo.decode_item(%{"Item" => item}) == %{"M" => "x", "id" => "1"}
     assert Dynamo.decode_item(%{"Items" => [item]}) == [%{"M" => "x", "id" => "1"}]
   end
+
+  test "#decode_item unwraps a response once and keeps attributes named Item or Items" do
+    with_s = %{"Item" => %{"S" => "x"}, "id" => %{"S" => "1"}}
+    with_m = %{"Item" => %{"M" => %{"a" => %{"S" => "b"}}}, "id" => %{"S" => "1"}}
+    with_l = %{"Items" => %{"L" => [%{"S" => "x"}]}, "id" => %{"S" => "1"}}
+
+    cases = [
+      {with_s, %{"Item" => "x", "id" => "1"}},
+      {with_m, %{"Item" => %{"a" => "b"}, "id" => "1"}},
+      {with_l, %{"Items" => ["x"], "id" => "1"}}
+    ]
+
+    for {item, decoded} <- cases do
+      assert Dynamo.decode_item(item) == decoded
+      assert Dynamo.decode_item(%{"Item" => item}) == decoded
+      assert Dynamo.decode_item(%{"Items" => [item]}) == [decoded]
+    end
+
+    item = %{"Item" => %{"S" => "x"}, "name" => %{"S" => "n"}}
+    assert Dynamo.decode_item(item, as: Test.User) == %Test.User{name: "n"}
+    assert Dynamo.decode_item(%{"Item" => item}, as: Test.User) == %Test.User{name: "n"}
+  end
 end

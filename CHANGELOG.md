@@ -1,5 +1,47 @@
 # Changelog
 
+## Unreleased
+
+### Security
+
+- `ExAws.Dynamo.Encoder.encode/2` no longer treats a map that merely contains a DynamoDB
+  type-descriptor key (`"S"`, `"N"`, `"B"`, `"BOOL"`, `"NULL"`, `"M"`, `"L"`, `"SS"`, `"NS"`, `"BS"`)
+  as already encoded. Previously such a map was sent to DynamoDB verbatim, so user-controlled data
+  (for example a decoded JSON body passed in `expression_attribute_values`) could choose the raw
+  `AttributeValue` type and contents that were sent and stored. All maps are now encoded as `M`.
+- **Breaking:** to pass a value that is already in DynamoDB format, wrap it explicitly with
+  `ExAws.Dynamo.Encoded.new/1`, for example
+  `expression_attribute_values: [api_key: ExAws.Dynamo.Encoded.new(%{"B" => "dGVzdA=="})]`.
+  The wrapper validates the value and works anywhere an encodable value is accepted, including
+  nested inside items.
+- **Breaking:** a `LastEvaluatedKey` (or any other map of attribute name => `AttributeValue`
+  taken from a response) is no longer recognised by shape when passed back as `exclusive_start_key`
+  or as a `batch_get_item` key. Wrap it with the new `ExAws.Dynamo.Encoded.attributes/1`:
+  `exclusive_start_key: ExAws.Dynamo.Encoded.attributes(response["LastEvaluatedKey"])`.
+  `ExAws.stream!/2` over `scan` and `query` does this internally.
+- `ExAws.Dynamo.Encoder.encode!/2` is deprecated; it is now identical to `encode/2`.
+
+### Fixed
+
+- `ExAws.Dynamo.Decoder.decode/1` no longer misinterprets the attributes of a nested `M` value as
+  a typed `AttributeValue` when an attribute is named like a type descriptor. Previously a stored
+  map such as `%{"S" => 1}` decoded to `%{"N" => "1"}`, and `%{"L" => "x"}` raised
+  `FunctionClauseError`. The typed clauses now also check the value's shape, so a top-level item
+  with an attribute named e.g. `"S"` is no longer collapsed to that attribute's value.
+- `ExAws.Dynamo.decode_item/2` now decodes through the new `ExAws.Dynamo.Decoder.decode_item/2`,
+  which treats its argument as an item unconditionally. (An `M` `AttributeValue` is no longer
+  unwrapped by `decode_item/2`; use `ExAws.Dynamo.Decoder.decode/2` for that.) Previously an item with an attribute named
+  `"M"` was mistaken for an `M` value, which raised `FunctionClauseError` or dropped the other
+  attributes. `decode_item/1` without options also no longer raises.
+- `ExAws.Dynamo.decode_item/2` unwraps a `get_item`, `query` or `scan` response once and decodes
+  what it holds as an item instead of dispatching on its shape again. Previously an item with an
+  attribute named `"Item"` or `"Items"` was unwrapped a second time, which raised
+  `FunctionClauseError` or returned that attribute's value in place of the item, both for items
+  inside a response and for bare items such as those yielded by `ExAws.stream!/2`. A bare item is
+  told apart from a response by the value under `"Item"`/`"Items"`: an `AttributeValue` in an
+  item, a map of attributes or a list of those in a response.
+- `ExAws.Dynamo.Encoded.new/1` rejects an `N` whose string is not a decimal number.
+
 ## v4.2.2 - 2024-09-10
 
 - Support condition failure return values

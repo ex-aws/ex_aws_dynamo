@@ -14,31 +14,37 @@ defmodule ExAws.Dynamo.Encoder do
   ```
 
   This is handled via the ExAws.Dynamo.Encodable protocol.
+
+  ## Values that are already in DynamoDB format
+
+  The encoder never inspects the *shape* of a map to decide whether it has already been
+  encoded. A map such as `%{"S" => "foo"}` is an ordinary map with a key named `"S"` and is
+  encoded as `%{"M" => %{"S" => %{"S" => "foo"}}}`. Deciding by shape would let any
+  caller-controlled map, such as a decoded JSON body, smuggle a raw, caller-chosen
+  `AttributeValue` onto the wire.
+
+  To pass a value that is already in DynamoDB format, mark it explicitly with
+  `ExAws.Dynamo.Encoded.new/1`:
+
+  ```elixir
+  ExAws.Dynamo.Encoded.new(%{"B" => "dGVzdA=="}) |> ExAws.Dynamo.Encoder.encode
+  #=> %{"B" => "dGVzdA=="}
+  ```
   """
 
   alias ExAws.Dynamo.Encodable
 
-  # These functions exist to ensure that encoding is idempotent.
-  def encode(value), do: encode(value, [])
-  def encode(%{"B" => _} = val, _), do: val
-  def encode(%{"BOOL" => _} = val, _), do: val
-  def encode(%{"BS" => _} = val, _), do: val
-  def encode(%{"L" => _} = val, _), do: val
-  def encode(%{"M" => _} = val, _), do: val
-  def encode(%{"NS" => _} = val, _), do: val
-  def encode(%{"NULL" => _} = val, _), do: val
-  def encode(%{"N" => _} = val, _), do: val
-  def encode(%{"S" => _} = val, _), do: val
-  def encode(%{"SS" => _} = val, _), do: val
+  @doc """
+  Encodes `value` into a Dynamo-style map via the `ExAws.Dynamo.Encodable` protocol.
 
-  def encode(value, options), do: Encodable.encode(value, options)
+  Encoding is applied unconditionally. Wrap values that are already in DynamoDB format with
+  `ExAws.Dynamo.Encoded.new/1` to have them passed through verbatim.
+  """
+  def encode(value, options \\ []), do: Encodable.encode(value, options)
 
-  # Use this in case you want to encode something already in Dynamo format
-  # for some reason I cannot fathom. If you find yourself using this, please open an issue
-  # so I can find out why and better support this.
-  def encode!(value, options \\ []) do
-    Encodable.encode(value, options)
-  end
+  @doc false
+  @deprecated "encode!/2 is now identical to encode/2; use encode/2 instead"
+  def encode!(value, options \\ []), do: encode(value, options)
 
   def encode_root(value, options \\ []) do
     case Encodable.encode(value, options) do

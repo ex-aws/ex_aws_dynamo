@@ -1,5 +1,6 @@
 defmodule ExAws.Dynamo.EncoderTest do
   use ExUnit.Case, async: true
+  alias ExAws.Dynamo.Encoded
   alias ExAws.Dynamo.Encoder
 
   test "Encoder converts numbers to binaries" do
@@ -68,9 +69,38 @@ defmodule ExAws.Dynamo.EncoderTest do
                  end
   end
 
-  test "encoder is idempotent" do
-    value = %{foo: 1, bar: %{baz: 2, zounds: "asdf"}}
-    assert value |> Encoder.encode() == value |> Encoder.encode() |> Encoder.encode()
+  test "encoder does not treat maps that merely look like Dynamo values as already encoded" do
+    # Deciding by shape would let caller-controlled data (e.g. a decoded JSON body) choose
+    # the raw AttributeValue that is sent to DynamoDB. Such maps are ordinary maps.
+    assert Encoder.encode(%{"N" => "evil"}) == %{"M" => %{"N" => %{"S" => "evil"}}}
+
+    assert Encoder.encode(%{"S" => "x", "junk" => 1}) ==
+             %{"M" => %{"S" => %{"S" => "x"}, "junk" => %{"N" => "1"}}}
+
+    assert Encoder.encode(%{"NULL" => true}) == %{"M" => %{"NULL" => %{"BOOL" => true}}}
+
+    assert Encoder.encode(%{"M" => %{"role" => %{"S" => "admin"}}}) ==
+             %{"M" => %{"M" => %{"M" => %{"role" => %{"M" => %{"S" => %{"S" => "admin"}}}}}}}
+
+    for key <- ~w(B BOOL BS L M N NS NULL S SS) do
+      assert %{"M" => %{^key => %{"S" => "payload"}}} = Encoder.encode(%{key => "payload"})
+    end
+
+    # Consequently encoding is not idempotent: encoding an encoded value wraps it in a Map.
+    assert Encoder.encode(Encoder.encode(1)) == %{"M" => %{"N" => %{"S" => "1"}}}
+  end
+
+  test "encoder passes through values explicitly marked as already encoded" do
+    raw = %{"B" => "dGVzdA=="}
+
+    assert Encoder.encode(Encoded.new(raw)) == raw
+    assert Encoder.encode(%{"blob" => Encoded.new(raw)}) == %{"M" => %{"blob" => raw}}
+    assert Encoder.encode([Encoded.new(raw), 1]) == %{"L" => [raw, %{"N" => "1"}]}
+    assert Encoder.encode_root(%{"blob" => Encoded.new(raw)}) == %{"blob" => raw}
+
+    item = %{"M" => %{"id" => %{"S" => "1"}, "n" => %{"N" => "2"}}}
+    assert Encoder.encode(Encoded.new(item)) == item
+    assert Encoder.encode_root(Encoded.new(item)) == item["M"]
   end
 
   test "encoder works with nested structs" do

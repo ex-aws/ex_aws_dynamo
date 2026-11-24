@@ -236,6 +236,28 @@ defmodule ExAws.DynamoTest do
            ).data == expected
   end
 
+  test "#query encodes expression attribute values that merely look like Dynamo values" do
+    # A user-controlled map containing a type-descriptor key must be encoded as a Map,
+    # not sent to DynamoDB verbatim as an attacker-chosen AttributeValue.
+    data =
+      Dynamo.query("Products",
+        key_condition_expression: "attr = :val",
+        expression_attribute_values: [val: %{"N" => "evil"}]
+      ).data
+
+    assert data["ExpressionAttributeValues"] == %{":val" => %{"M" => %{"N" => %{"S" => "evil"}}}}
+  end
+
+  test "#query passes through explicitly pre-encoded expression attribute values" do
+    data =
+      Dynamo.query("Products",
+        key_condition_expression: "attr = :val",
+        expression_attribute_values: [val: Dynamo.Encoded.new(%{"B" => "dGVzdA=="})]
+      ).data
+
+    assert data["ExpressionAttributeValues"] == %{":val" => %{"B" => "dGVzdA=="}}
+  end
+
   test "#batch_get_item" do
     expected = %{
       "RequestItems" => %{
@@ -490,5 +512,54 @@ defmodule ExAws.DynamoTest do
 
     assert Enum.at(request.headers, 0) == {"x-amz-target", "DynamoDB_20120810.TransactWriteItems"}
     assert request.data == expected
+  end
+
+  test "#scan and #query pass a wire-format exclusive_start_key through when wrapped" do
+    key = %{"id" => %{"S" => "user-42"}, "ts" => %{"N" => "7"}}
+    wrapped = ExAws.Dynamo.Encoded.attributes(key)
+
+    assert Dynamo.scan("Users", exclusive_start_key: wrapped).data["ExclusiveStartKey"] == key
+    assert Dynamo.query("Users", exclusive_start_key: wrapped).data["ExclusiveStartKey"] == key
+
+    # Unwrapped, the key is caller data and is encoded like any other map.
+    assert Dynamo.scan("Users", exclusive_start_key: key).data["ExclusiveStartKey"] ==
+             %{"id" => %{"M" => %{"S" => %{"S" => "user-42"}}}, "ts" => %{"M" => %{"N" => %{"S" => "7"}}}}
+  end
+
+  test "#batch_get_item accepts wire-format keys wrapped with Encoded.attributes/1" do
+    keys = [%{"id" => %{"S" => "1"}}, %{"id" => %{"S" => "2"}}]
+    wrapped = Enum.map(keys, &ExAws.Dynamo.Encoded.attributes/1)
+
+    assert Dynamo.batch_get_item(%{"Users" => [keys: wrapped]}).data["RequestItems"]["Users"]["Keys"] ==
+             keys
+  end
+
+  test "#decode_item works without options and with an attribute named M" do
+    item = %{"M" => %{"S" => "x"}, "id" => %{"S" => "1"}}
+    assert Dynamo.decode_item(item) == %{"M" => "x", "id" => "1"}
+    assert Dynamo.decode_item(%{"Item" => item}) == %{"M" => "x", "id" => "1"}
+    assert Dynamo.decode_item(%{"Items" => [item]}) == [%{"M" => "x", "id" => "1"}]
+  end
+
+  test "#decode_item unwraps a response once and keeps attributes named Item or Items" do
+    with_s = %{"Item" => %{"S" => "x"}, "id" => %{"S" => "1"}}
+    with_m = %{"Item" => %{"M" => %{"a" => %{"S" => "b"}}}, "id" => %{"S" => "1"}}
+    with_l = %{"Items" => %{"L" => [%{"S" => "x"}]}, "id" => %{"S" => "1"}}
+
+    cases = [
+      {with_s, %{"Item" => "x", "id" => "1"}},
+      {with_m, %{"Item" => %{"a" => "b"}, "id" => "1"}},
+      {with_l, %{"Items" => ["x"], "id" => "1"}}
+    ]
+
+    for {item, decoded} <- cases do
+      assert Dynamo.decode_item(item) == decoded
+      assert Dynamo.decode_item(%{"Item" => item}) == decoded
+      assert Dynamo.decode_item(%{"Items" => [item]}) == [decoded]
+    end
+
+    item = %{"Item" => %{"S" => "x"}, "name" => %{"S" => "n"}}
+    assert Dynamo.decode_item(item, as: Test.User) == %Test.User{name: "n"}
+    assert Dynamo.decode_item(%{"Item" => item}, as: Test.User) == %Test.User{name: "n"}
   end
 end

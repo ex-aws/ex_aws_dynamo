@@ -13,8 +13,42 @@ defmodule ExAws.Dynamo.DecoderTest do
   end
 
   test "Decode map (different types)" do
-    assert %{"M" => %{"M" => %{foo: %{"S" => "bar"}, bar: %{"N" => 23}}}}
+    assert %{"M" => %{foo: %{"S" => "bar"}, bar: %{"N" => 23}}}
            |> Decoder.decode() == %{foo: "bar", bar: 23}
+  end
+
+  test "Decode map whose attribute names collide with Dynamo type descriptors" do
+    # The contents of an M value are always attribute name => AttributeValue, even when an
+    # attribute happens to be named like a type descriptor.
+    assert Decoder.decode(%{"M" => %{"S" => %{"N" => "1"}, "other" => %{"S" => "x"}}}) ==
+             %{"S" => 1, "other" => "x"}
+
+    assert Decoder.decode(%{"M" => %{"L" => %{"S" => "x"}}}) == %{"L" => "x"}
+    assert Decoder.decode(%{"M" => %{"M" => %{"S" => %{"S" => "x"}}}}) == %{"M" => %{"S" => "x"}}
+    assert Decoder.decode(%{"M" => %{"NULL" => %{"BOOL" => false}}}) == %{"NULL" => false}
+    assert Decoder.decode(%{"M" => %{"N" => %{"S" => "evil"}}}) == %{"N" => "evil"}
+  end
+
+  test "Decode item with attributes named like Dynamo type descriptors" do
+    item = %{"S" => %{"S" => "foo"}, "N" => %{"N" => "1"}, "L" => %{"L" => []}, "id" => %{"S" => "1"}}
+    assert Decoder.decode(item) == %{"S" => "foo", "N" => 1, "L" => [], "id" => "1"}
+  end
+
+  test "Encoding then decoding a map shaped like a Dynamo value round-trips" do
+    values = [
+      %{"N" => "1000000"},
+      %{"S" => "evil"},
+      %{"NULL" => "true"},
+      %{"L" => "x"},
+      %{"BOOL" => true},
+      %{"B" => "AAEC"},
+      %{"M" => %{"role" => %{"S" => "admin"}, "is_admin" => %{"BOOL" => true}}}
+    ]
+
+    for value <- values do
+      assert value |> Encoder.encode() |> Decoder.decode() == value
+      assert %{"v" => value} |> Encoder.encode_root() |> Decoder.decode() == %{"v" => value}
+    end
   end
 
   test "Decode number set to a mapset of numbers" do
@@ -66,5 +100,29 @@ defmodule ExAws.Dynamo.DecoderTest do
                "B" => "BcGBCQAgCATAVX6ZBvlKUogP1P3pbmi9bYlFwal9DTPEDCu0s8E06DWqM3TqAw=="
              })
            ) == "Encoder can handle binaries that are not strings"
+  end
+
+  defmodule Rec do
+    defstruct [:id, :M]
+  end
+
+  test "decode_item/1 handles items with attributes named like type descriptors, including M" do
+    item = %{"M" => %{"S" => "x"}, "id" => %{"S" => "1"}}
+    assert Decoder.decode_item(item) == %{"M" => "x", "id" => "1"}
+    assert Decoder.decode(item) == %{"M" => "x", "id" => "1"}
+
+    nested = %{"M" => %{"M" => %{"a" => %{"S" => "x"}}}, "id" => %{"S" => "1"}}
+    assert Decoder.decode_item(nested) == %{"M" => %{"a" => "x"}, "id" => "1"}
+    assert Decoder.decode(nested) == %{"M" => %{"a" => "x"}, "id" => "1"}
+
+    # Only decode_item/1 can tell a single-attribute item named "M" from an M value.
+    assert Decoder.decode_item(%{"M" => %{"S" => "x"}}) == %{"M" => "x"}
+    assert Decoder.decode(%{"M" => %{"a" => %{"S" => "x"}}}) == %{"a" => "x"}
+  end
+
+  test "decode_item/2 coerces into a struct" do
+    item = %{"M" => %{"S" => "x"}, "id" => %{"S" => "1"}}
+    assert Decoder.decode_item(item, as: Rec) == %Rec{id: "1", M: "x"}
+    assert Decoder.decode(item, as: Rec) == %Rec{id: "1", M: "x"}
   end
 end

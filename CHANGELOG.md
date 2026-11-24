@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 4.3.0 - 2026-11-24
 
 ### Security
 
@@ -41,6 +41,7 @@
   told apart from a response by the value under `"Item"`/`"Items"`: an `AttributeValue` in an
   item, a map of attributes or a list of those in a response.
 - `ExAws.Dynamo.Encoded.new/1` rejects an `N` whose string is not a decimal number.
+- Fix typespec of primary key to allow numbers
 
 ## v4.2.2 - 2024-09-10
 
